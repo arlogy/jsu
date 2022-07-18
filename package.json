@@ -1,0 +1,41 @@
+{
+  "name": "jsu",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "JavaScript Utilities",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "src/"
+  ],
+  "scripts": {
+    "test": "echo Running tests... && npm run test:_index -s && npm run test:common -s && npm run test:csv_parser -s && npm run test:event -s && echo Finished!",
+    "test:_index": "mocha ./tests/_index.js",
+    "test:common": "mocha ./tests/jsu_common.js",
+    "test:csv_parser": "mocha ./tests/jsu_csv_parser.js",
+    "test:event": "mocha ./tests/jsu_event.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arlogy/jsu.git"
+  },
+  "keywords": [
+    "javascript",
+    "js",
+    "utility",
+    "jsutils",
+    "jsu",
+    "csv",
+    "csv parser",
+    "rfc 4180"
+  ],
+  "author": "https://github.com/arlogy",
+  "bugs": {
+    "url": "https://github.com/arlogy/jsu/issues"
+  },
+  "homepage": "https://github.com/arlogy/jsu#readme",
+  "devDependencies": {
+    "jsdom": "^20.0.0",
+    "mocha": "^10.0.0"
+  }
+}
