@@ -81,10 +81,13 @@ function() {
     };
 
     function isCssColor(value) {
-        return typeof CSS !== 'undefined' && CSS.supports ? CSS.supports('color', value) : false;
+        return typeof CSS !== 'undefined' && CSS.supports ? CSS.supports('color', value) : null;
     }
 
-    function isCssColorOrString(value) { return isCssColor(value) || isString(value); }
+    function isCssColorOrString(value) {
+        var isColor = isCssColor(value);
+        return isColor !== null ? isColor : isString(value);
+    }
 
     // --- Property Accessor/Modifier ---
 

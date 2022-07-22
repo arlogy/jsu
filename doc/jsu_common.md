@@ -107,15 +107,16 @@ Returns whether a value is an array.
 
 ## JsuCmn.isCssColor(value)
 
-Returns `CSS.supports('color', value)` if `CSS.supports` is set, or `false`
-otherwise. Note that this function returns `false` in two cases: CSS color
-checking is not available or `value` is not a CSS color. For this reason,
-sometimes you might want to use `JsuCmn.isCssColorOrString()` instead, so that
-`value` is not rejected just because color checking is not available.
+Returns `CSS.supports('color', value)` if `CSS.supports` is set, or `null`
+otherwise. Note that this function returns a boolean value only when CSS color
+is available, otherwise it returns `null`. For this reason, sometimes you might
+want to use `JsuCmn.isCssColorOrString()` instead, so that `value` is not
+rejected just because color checking is not available.
 
 ## JsuCmn.isCssColorOrString(value)
 
-Returns `JsuCmn.isCssColor(value) || JsuCmn.isString(value)`.
+Returns `JsuCmn.isCssColor(value)` if not null, or `JsuCmn.isString(value)`
+otherwise.
 
 ## JsuCmn.copyPropsNoCheck(propNames, fromObj, toObj)
 

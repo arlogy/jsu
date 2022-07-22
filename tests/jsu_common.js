@@ -213,21 +213,21 @@ const { JSDOM } = jsdom;
             }}},
         ];
         describe('isCssColor()', () => {
-            it('should return the same boolean value as CSS.supports() if it is defined or false otherwise', () => {
+            it('should return the same value as CSS.supports() if the function is defined, or null otherwise', () => {
                 jsImpl.mockIn(function() {
                     mockData.forEach(function(mdata) {
                         jsImpl.mock(mdata);
                         funcParams.forEach(function(val) {
                             const CSS = mdata.CSS;
                             if(CSS && CSS.supports) assert.deepStrictEqual(JsuCmn.isCssColor(val), {_val:val});
-                            else assert.strictEqual(JsuCmn.isCssColor(val), false);
+                            else assert.strictEqual(JsuCmn.isCssColor(val), null);
                         });
                     });
                 });
             });
         });
         describe('isCssColorOrString()', () => {
-            it('should return isCssColor() || isString()', () => {
+            it("should return isCssColor() if not null, or isString() otherwise", () => {
                 jsImpl.mockIn(function() {
                     mockData.forEach(function(mdata) {
                         jsImpl.mock(mdata);
