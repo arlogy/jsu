@@ -22,7 +22,9 @@ function() {
         return typeof value === 'number' && isFinite(value);
     }
 
-    function JsuEventTarget() {
+    const API = {};
+
+    API.EventTarget = function() {
         var target = null;
         try {
             target = new EventTarget(); // constructor only supported in new browser versions (2018+)
@@ -35,10 +37,10 @@ function() {
         ['addEventListener', 'removeEventListener', 'dispatchEvent'].forEach(function(f) {
             this[f] = target[f].bind(target);
         }, this);
-    }
+    };
 
-    function createTimer(config) {
-        var timer = new JsuEventTarget();
+    API.createTimer = function(config) {
+        var timer = new API.EventTarget();
 
         var _running = false;
         var _delay = 0;
@@ -99,11 +101,8 @@ function() {
         timer.isSingleShot = function() { return _timeoutLimit === 1; };
 
         return timer;
-    }
-
-    return {
-        'EventTarget': JsuEventTarget,
-        'createTimer': createTimer,
     };
+
+    return API;
 }
 );

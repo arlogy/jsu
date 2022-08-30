@@ -5,13 +5,24 @@
 */
 
 const JsuCmn = require('../src/jsu_common.js');
-const { jsImpl } = require('./utils_core.js');
+
+const { dummy } = require('./utils_core.js');
 const { cssDisplays, funcParams, htmlVisualTagNames } = require('./utils_test_data.js');
+
 const assert = require('assert');
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
+const sinon = require('sinon');
+afterEach(() => {
+    sinon.restore(); // restore the default sandbox to prevent memory leak
+});
 
 (function() {
+    const dom = new JSDOM('<!DOCTYPE html><html></html>');
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.CSS = undefined;
+
     const falsyValues = funcParams.filter(x => !x);
     const valfalCssDisplays = [...cssDisplays, ...falsyValues]; // valid and falsy CSS displays
     const numbers = funcParams.filter(n => typeof n === 'number' || typeof n === 'bigint');
@@ -24,35 +35,29 @@ const { JSDOM } = jsdom;
     (function() {
         describe('getLocalStorageItem() && setLocalStorageItem()', () => {
             it('should fail if window.localSotrage is not available', () => {
-                jsImpl.mockIn(function() {
-                    // accessing window.localStorage will throw an exception because no URL is configured for dom
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    const window = dom.window;
-                    jsImpl.mock({window:window});
-                    funcParams.forEach(function(key) {
-                        funcParams.forEach(function(val) {
-                            assert.strictEqual(JsuCmn.setLocalStorageItem(key, val), false);
-                            assert.strictEqual(JsuCmn.getLocalStorageItem(key), null);
-                        });
+                // accessing window.localStorage will throw an exception because no URL is configured for dom
+                const dom = new JSDOM('<!DOCTYPE html><html></html>');
+                sinon.stub(global, 'window').value(dom.window);
+                funcParams.forEach(function(key) {
+                    funcParams.forEach(function(val) {
+                        assert.strictEqual(JsuCmn.setLocalStorageItem(key, val), false);
+                        assert.strictEqual(JsuCmn.getLocalStorageItem(key), null);
                     });
                 });
             });
             it('should succeed if window.localStorage is available unless the key or the value is a symbol', () => {
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>', {
-                        url: 'https://fake_url/',
-                    });
-                    const window = dom.window;
-                    jsImpl.mock({window:window});
-                    funcParams.forEach(function(key) {
-                        funcParams.forEach(function(val) {
-                            if(JsuCmn.setLocalStorageItem(key, val)) {
-                                assert.strictEqual(JsuCmn.getLocalStorageItem(key), val+'');
-                            }
-                            else {
-                                assert.strictEqual(typeof key === 'symbol' || typeof val === 'symbol', true);
-                            }
-                        });
+                const dom = new JSDOM('<!DOCTYPE html><html></html>', {
+                    url: 'https://fake_url/',
+                });
+                sinon.stub(global, 'window').value(dom.window);
+                funcParams.forEach(function(key) {
+                    funcParams.forEach(function(val) {
+                        if(JsuCmn.setLocalStorageItem(key, val)) {
+                            assert.strictEqual(JsuCmn.getLocalStorageItem(key), val+'');
+                        }
+                        else {
+                            assert.strictEqual(typeof key === 'symbol' || typeof val === 'symbol', true);
+                        }
                     });
                 });
             });
@@ -63,16 +68,12 @@ const { JSDOM } = jsdom;
         describe('setEltVisible()', () => {
             it('should correctly set the CSS display of an HTML element', function() {
                 this.timeout(0); // disable timeout limit for the test case
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    jsImpl.mock({document:dom.window.document});
-                    htmlVisualTagNames.forEach(function(tag) {
-                        const elt = document.createElement(tag);
-                        funcParams.forEach(function(vis) {
-                            valfalCssDisplays.forEach(function(dsp) {
-                                JsuCmn.setEltVisible(elt, vis, dsp);
-                                assert.strictEqual(elt.style.display, getCssDisplay(vis, dsp));
-                            });
+                htmlVisualTagNames.forEach(function(tag) {
+                    const elt = document.createElement(tag);
+                    funcParams.forEach(function(vis) {
+                        valfalCssDisplays.forEach(function(dsp) {
+                            JsuCmn.setEltVisible(elt, vis, dsp);
+                            assert.strictEqual(elt.style.display, getCssDisplay(vis, dsp));
                         });
                     });
                 });
@@ -82,37 +83,16 @@ const { JSDOM } = jsdom;
 
     (function() {
         describe('isEltVisible()', () => {
-            it('should return if the CSS display of an HTML element is not none', function() {
+            it('should return whether the CSS display computed by window.getComputedStyle() is not none', function() {
                 this.timeout(0); // disable timeout limit for the test case
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    const window = dom.window;
-                    jsImpl.mock({window:window, document:window.document});
-                    htmlVisualTagNames.forEach(function(tag) {
-                        const elt = document.createElement(tag);
-                        cssDisplays.forEach(function(dsp) {
-                            elt.style.display = dsp;
-                            assert.strictEqual(JsuCmn.isEltVisible(elt), elt.style.display !== 'none');
-                        });
-                    });
-                });
-            });
-            it('should call window.getComputedStyle() with the expected parameters', () => {
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    const window = dom.window;
-                    const windowGetComputedStyle = window.getComputedStyle;
-                    window.getComputedStyle = function(elt, pseudoElt) {
-                        windowGetComputedStyle.calledWithElt = elt;
-                        windowGetComputedStyle.calledWithPseudoElt = pseudoElt;
-                        return windowGetComputedStyle.call(window, elt, pseudoElt);
-                    };
-                    jsImpl.mock({window:window, document:window.document});
-                    htmlVisualTagNames.forEach(function(tag) {
-                        const elt = document.createElement(tag);
-                        JsuCmn.isEltVisible(elt);
-                        assert.strictEqual(windowGetComputedStyle.calledWithElt, elt);
-                        assert.strictEqual(windowGetComputedStyle.calledWithPseudoElt, null);
+                htmlVisualTagNames.forEach(function(tag) {
+                    const elt = document.createElement(tag);
+                    cssDisplays.forEach(function(dsp) {
+                        const getComputedStyle = sinon.stub(window, 'getComputedStyle').returns({display:dsp});
+                        const retVal = JsuCmn.isEltVisible(elt);
+                        assert.strictEqual(getComputedStyle.calledOnceWithExactly(elt, null), true);
+                        assert.strictEqual(retVal, getComputedStyle.getCall(0).returnValue.display !== 'none');
+                        getComputedStyle.restore();
                     });
                 });
             });
@@ -123,20 +103,15 @@ const { JSDOM } = jsdom;
         describe('switchEltVisibility()', () => {
             it('should toggle the visibility of an HTML element and set its CSS display accordingly', function() {
                 this.timeout(0); // disable timeout limit for the test case
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    const window = dom.window;
-                    jsImpl.mock({window:window, document:window.document});
-                    htmlVisualTagNames.forEach(function(tag) {
-                        const elt = document.createElement(tag);
-                        valfalCssDisplays.forEach(function(dsp) {
-                            [true, false].forEach(function(vis) {
-                                JsuCmn.setEltVisible(elt, vis); // we don't care about dsp here
-                                JsuCmn.switchEltVisibility(elt, dsp);
-                                const cvis = JsuCmn.isEltVisible(elt); // currently visible?
-                                assert.strictEqual(cvis, !vis);
-                                assert.strictEqual(elt.style.display, getCssDisplay(cvis, dsp));
-                            });
+                htmlVisualTagNames.forEach(function(tag) {
+                    const elt = document.createElement(tag);
+                    valfalCssDisplays.forEach(function(dsp) {
+                        [true, false].forEach(function(vis) {
+                            JsuCmn.setEltVisible(elt, vis); // we don't care about dsp here
+                            JsuCmn.switchEltVisibility(elt, dsp);
+                            const cvis = JsuCmn.isEltVisible(elt); // currently visible?
+                            assert.strictEqual(cvis, !vis);
+                            assert.strictEqual(elt.style.display, getCssDisplay(cvis, dsp));
                         });
                     });
                 });
@@ -204,38 +179,36 @@ const { JSDOM } = jsdom;
     })();
 
     (function() {
-        const mockData = [
-            {CSS:undefined},
-            {CSS:{supports:undefined}},
-            {CSS:{supports:function(prop, val) {
-                // check if the function is correctly called and returns a non-boolean value on purpose (just for testing)
-                return arguments.length === 2 && arguments[0] === 'color' ? {_val:val} : 'invalid call to CSS.supports()';
-            }}},
-        ];
         describe('isCssColor()', () => {
             it('should return the same value as CSS.supports() if the function is defined, or null otherwise', () => {
-                jsImpl.mockIn(function() {
-                    mockData.forEach(function(mdata) {
-                        jsImpl.mock(mdata);
-                        funcParams.forEach(function(val) {
-                            const CSS = mdata.CSS;
-                            if(CSS && CSS.supports) assert.deepStrictEqual(JsuCmn.isCssColor(val), {_val:val});
-                            else assert.strictEqual(JsuCmn.isCssColor(val), null);
-                        });
+                const cssDefs = [undefined, {supports:undefined}, {supports:sinon.stub().callsFake(dummy)}];
+                cssDefs.forEach(function(def) {
+                    sinon.stub(global, 'CSS').value(def);
+                    funcParams.forEach(function(val) {
+                        const retVal = JsuCmn.isCssColor(val);
+                        if(CSS && CSS.supports) {
+                            const supports = CSS.supports;
+                            assert.strictEqual(supports.calledOnceWithExactly('color', val), true);
+                            assert.strictEqual(retVal, supports.getCall(0).returnValue);
+                            supports.resetHistory();
+                        }
+                        else assert.strictEqual(retVal, null);
                     });
                 });
             });
         });
+    })();
+
+    (function() {
         describe('isCssColorOrString()', () => {
             it("should return isCssColor() if not null, or isString() otherwise", () => {
-                jsImpl.mockIn(function() {
-                    mockData.forEach(function(mdata) {
-                        jsImpl.mock(mdata);
-                        funcParams.forEach(function(val) {
-                            const CSS = mdata.CSS;
-                            if(CSS && CSS.supports) assert.deepStrictEqual(JsuCmn.isCssColorOrString(val), JsuCmn.isCssColor(val));
-                            else assert.strictEqual(JsuCmn.isCssColorOrString(val), JsuCmn.isString(val));
-                        });
+                [null, false, true].forEach(function(isCssColorRetVal) {
+                    funcParams.forEach(function(val) {
+                        const isCssColor = sinon.stub(JsuCmn, 'isCssColor').returns(isCssColorRetVal);
+                        const retVal = JsuCmn.isCssColorOrString(val);
+                        assert.strictEqual(isCssColor.calledOnceWithExactly(val), true);
+                        assert.strictEqual(retVal, isCssColorRetVal !== null ? isCssColorRetVal : JsuCmn.isString(val));
+                        isCssColor.restore();
                     });
                 });
             });
@@ -325,47 +298,36 @@ const { JSDOM } = jsdom;
     (function() {
         describe('parseInlineCssStyle()', () => {
             it('should correctly parse a single CSS rule', () => {
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    jsImpl.mock({document:dom.window.document});
-                    ['Wrong', 'Arial'].forEach(function(val) {
-                        assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+'; just-ignore-me').fontFamily, val);
-                        assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+'; ').fontFamily, val);
-                        assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+';').fontFamily, val);
-                        assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val).fontFamily, val);
-                    });
-                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-size:12px;').fontSize, '12px');
-                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-size:12').fontSize, '');
+                ['Wrong', 'Arial'].forEach(function(val) {
+                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+'; just-ignore-me').fontFamily, val);
+                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+'; ').fontFamily, val);
+                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+';').fontFamily, val);
+                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val).fontFamily, val);
                 });
+                assert.strictEqual(JsuCmn.parseInlineCssStyle('font-size:12px;').fontSize, '12px');
+                assert.strictEqual(JsuCmn.parseInlineCssStyle('font-size:12').fontSize, '');
             });
             it('should correctly parse multiple CSS rules', () => {
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    jsImpl.mock({document:dom.window.document});
-                    const obj = JsuCmn.parseInlineCssStyle('font-family:Arial; font-size:12px');
-                    assert.strictEqual(obj.fontFamily, 'Arial');
-                    assert.strictEqual(obj.fontSize, '12px');
-                });
+                const obj = JsuCmn.parseInlineCssStyle('font-family:Arial; font-size:12px');
+                assert.strictEqual(obj.fontFamily, 'Arial');
+                assert.strictEqual(obj.fontSize, '12px');
             });
             it('should correctly parse a short-hand CSS rule', () => {
-                jsImpl.mockIn(function() {
-                    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                    jsImpl.mock({document:dom.window.document});
-                    // rule is taken from CSS font documentation and should set each of the following
-                    //     style | variant | weight | stretch | size/line-height | family
-                    const font = 'italic small-caps bolder condensed 16px/3 cursive';
-                    const rule = 'font: '+font+';';
-                    const obj = JsuCmn.parseInlineCssStyle(rule);
-                    assert.strictEqual(obj.fontStyle, 'italic');
-                    assert.strictEqual(obj.fontVariant, 'small-caps');
-                    assert.strictEqual(obj.fontWeight, 'bolder');
-                    assert.strictEqual(obj.fontFamily, 'cursive');
-                    // it seems that jsdom treats the following differently, so they are not part of the test case
+                // rule is taken from CSS font documentation and should set each of the following
+                //     style | variant | weight | stretch | size/line-height | family
+                const font = 'italic small-caps bolder condensed 16px/3 cursive';
+                const rule = 'font: '+font+';';
+                const obj = JsuCmn.parseInlineCssStyle(rule);
+                assert.strictEqual(obj.fontStyle, 'italic');
+                assert.strictEqual(obj.fontVariant, 'small-caps');
+                assert.strictEqual(obj.fontWeight, 'bolder');
+                assert.strictEqual(obj.fontFamily, 'cursive');
+                // it seems that jsdom sets the following obj properties differently when parseInlineCssStyle() is called
+                //     they are therefore commented in the test case
 //                    assert.strictEqual(obj.font.split(' ').sort().join(' '), font.split(' ').sort().join(' '));
 //                    assert.strictEqual(obj.fontStretch, 'condensed');
 //                    assert.strictEqual(obj.fontSize, '16px');
 //                    assert.strictEqual(obj.fontLineHeight, '3');
-                });
             });
         });
     })();

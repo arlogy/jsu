@@ -5,11 +5,17 @@
 */
 
 const JsuEvt = require('../src/jsu_event.js');
-const { jsImpl, objectHasOnlyProperties } = require('./utils_core.js');
+
+const { objectHasOnlyProperties } = require('./utils_core.js');
 const { funcParams } = require('./utils_test_data.js');
+
 const assert = require('assert');
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
+const sinon = require('sinon');
+afterEach(() => {
+    sinon.restore(); // restore the default sandbox to prevent memory leak
+});
 
 (function() {
     // very simple implementation
@@ -24,73 +30,61 @@ const { JSDOM } = jsdom;
         }
     };
 
+    const dom = new JSDOM('<!DOCTYPE html><html></html>');
+    global.window = dom.window;
+    global.document = dom.window.document;
+    global.CustomEvent = CustomEventImpl; // using dom.window.CustomEvent instead of CustomEventImpl results in errors
+
     // same implementation as in the code to be tested
     function isNumber(value) {
         return typeof value === 'number' && isFinite(value);
     }
 
     (function() {
-        const dom = new JSDOM('<!DOCTYPE html><html></html>');
-        const window = dom.window;
-        const document = window.document;
-        const mockData = [
-            {EventTarget:undefined},
-            {EventTarget:window.EventTarget},
-        ];
-        describe('new JsuEventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
-            it('should be an instance of JsuEvt.EventTarget', () => {
-                jsImpl.mockIn(function() {
-                    mockData.forEach(function(mdata) {
-                        jsImpl.mock(mdata);
-                        if(mdata.EventTarget === undefined) jsImpl.mock({document:document});
-                        assert.strictEqual(new JsuEvt.EventTarget() instanceof JsuEvt.EventTarget, true);
-                    });
+        describe('new JsuEvt.EventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
+            const cssTargets = [undefined, null, window.EventTarget];
+            it('should never fail', () => {
+                cssTargets.forEach(function(val) {
+                    sinon.stub(global, 'EventTarget').value(val);
+                    assert.strictEqual(new JsuEvt.EventTarget() instanceof JsuEvt.EventTarget, true);
                 });
             });
             it('should only have the expected properties', () => {
-                const expectedProps = [
-                    'addEventListener', 'dispatchEvent', 'removeEventListener',
-                ];
-                jsImpl.mockIn(function() {
-                    mockData.forEach(function(mdata) {
-                        jsImpl.mock(mdata);
-                        if(mdata.EventTarget === undefined) jsImpl.mock({document:document});
-                        const eTarget = new JsuEvt.EventTarget();
-                        assert.strictEqual(objectHasOnlyProperties(eTarget, expectedProps), true);
-                    });
+                const expectedProps = ['addEventListener', 'dispatchEvent', 'removeEventListener'];
+                cssTargets.forEach(function(val) {
+                    sinon.stub(global, 'EventTarget').value(val);
+                    const eTarget = new JsuEvt.EventTarget();
+                    assert.strictEqual(objectHasOnlyProperties(eTarget, expectedProps), true);
                 });
             });
             it('should correctly handle event listeners', () => {
-                jsImpl.mockIn(function() {
-                    jsImpl.mock({Event:window.Event});
-                    mockData.forEach(function(mdata) {
-                        jsImpl.mock(mdata);
-                        if(mdata.EventTarget === undefined) jsImpl.mock({document:document});
-                        const eventPool = [
-                            new Event('acc'), new Event('acc'), new Event('acc'),
-                        ];
-                        let acc = 0; // accumulator
-                        const accumulate = (e) => {
-                            if(eventPool.indexOf(e) !== -1) {
-                                if(typeof acc === 'number') acc += 5;
-                            }
-                            else acc = 'Received an event that was not or should not have been dispatched';
-                        };
-                        const eTarget = new JsuEvt.EventTarget();
-                        // add event listener
-                        eTarget.addEventListener('acc', accumulate);
-                        eTarget.dispatchEvent(eventPool[0]);
-                        eTarget.dispatchEvent(eventPool[1]);
-                        eTarget.dispatchEvent(new Event('unhandled')); // the listener will not be called
-                        assert.strictEqual(acc, 10);
-                        // remove event listener
-                        eTarget.removeEventListener('unhandled', null); // the listener will not be removed
-                        eTarget.dispatchEvent(eventPool[2]);
-                        assert.strictEqual(acc, 15);
-                        eTarget.removeEventListener('acc', accumulate); // the listener is now removed
-                        eTarget.dispatchEvent(new Event('acc'));
-                        assert.strictEqual(acc, 15);
-                    });
+                sinon.stub(global, 'Event').value(window.Event);
+                cssTargets.forEach(function(val) {
+                    sinon.stub(global, 'EventTarget').value(val);
+                    const eventPool = [
+                        new Event('acc'), new Event('acc'), new Event('acc'),
+                    ];
+                    let acc = 0; // accumulator
+                    const accumulate = (e) => {
+                        if(eventPool.indexOf(e) !== -1) {
+                            if(typeof acc === 'number') acc += 5;
+                        }
+                        else acc = 'Received an event that was not or should not have been dispatched';
+                    };
+                    const eTarget = new JsuEvt.EventTarget();
+                    // add event listener
+                    eTarget.addEventListener('acc', accumulate);
+                    eTarget.dispatchEvent(eventPool[0]);
+                    eTarget.dispatchEvent(eventPool[1]);
+                    eTarget.dispatchEvent(new Event('unhandled')); // the listener will not be called
+                    assert.strictEqual(acc, 10);
+                    // remove event listener
+                    eTarget.removeEventListener('unhandled', null); // the listener will not be removed
+                    eTarget.dispatchEvent(eventPool[2]);
+                    assert.strictEqual(acc, 15);
+                    eTarget.removeEventListener('acc', accumulate); // the listener is now removed
+                    eTarget.dispatchEvent(new Event('acc'));
+                    assert.strictEqual(acc, 15);
                 });
             });
         });
@@ -147,17 +141,6 @@ const { JSDOM } = jsdom;
         });
 
         describe('createTimer() then starting and stopping the timer', () => {
-            before(() => {
-                // runs once before the first test in this block
-                // using new JSDOM(...).window.CustomEvent instead of CustomEventImpl results in errors
-                jsImpl.mock({CustomEvent:CustomEventImpl});
-            });
-
-            after(() => {
-                // runs once after the last test in this block
-                jsImpl.resetAll();
-            });
-
             describe('start()', () => {
                 it('should correctly set timer properties', () => {
                     timeDels.forEach(function(limit) {

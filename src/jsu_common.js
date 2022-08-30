@@ -17,9 +17,11 @@
     }
 })(
 function() {
+    const API = {};
+
     // --- Local Storage ---
 
-    function setLocalStorageItem(key, value) {
+    API.setLocalStorageItem = function(key, value) {
         try { // see (1) below
             if(window.localStorage) {
                 window.localStorage.setItem(key, value);
@@ -27,15 +29,15 @@ function() {
             }
         } catch(e) {}
         return false;
-    }
+    };
 
-    function getLocalStorageItem(key) {
+    API.getLocalStorageItem = function(key) {
         try { // see (1) below
             return window.localStorage ? window.localStorage.getItem(key)
                                        : null; // returning null because getItem() also returns null when key does not exist
         } catch(e) {}
         return null; // returning null here too
-    }
+    };
 
     // (1) An exception might be raised when trying to access window.localStorage,
     //     for example when cookies are blocked. So access to the storage must
@@ -43,25 +45,25 @@ function() {
 
     // --- UI ---
 
-    function setEltVisible(elt, vis, dsp) {
+    API.setEltVisible = function(elt, vis, dsp) {
         elt.style.display = vis ? (dsp && dsp !== 'none' ? dsp : 'revert')
                                 : 'none';
-    }
+    };
 
-    function isEltVisible(elt) {
+    API.isEltVisible = function(elt) {
         return window.getComputedStyle(elt, null).display !== 'none';
         // getComputedStyle() must be used so that styles in external stylesheets are inspected
-    }
+    };
 
-    function switchEltVisibility(elt, dsp) {
-        setEltVisible(elt, !isEltVisible(elt), dsp);
-    }
+    API.switchEltVisibility = function(elt, dsp) {
+        API.setEltVisible(elt, !API.isEltVisible(elt), dsp);
+    };
 
     // --- Type Checker ---
 
-    function isBoolean(value) { return typeof value === 'boolean'; }
+    API.isBoolean = function(value) { return typeof value === 'boolean'; };
 
-    var isNumber = Number.isFinite || function(value) { // polyfill for Number.isFinite()
+    API.isNumber = Number.isFinite || function(value) { // polyfill for Number.isFinite()
         return typeof value === 'number' && isFinite(value);
         // Number.isFinite() is used instead of !Number.isNaN() for example
         // because we want to define a number as a finite value (strings
@@ -69,55 +71,55 @@ function() {
         // example
     };
 
-    function isNumberAlike(value) {
+    API.isNumberAlike = function(value) {
         var tov = typeof value;
         return (tov === 'number' || tov === 'string') && isFinite(value);
-    }
+    };
 
-    function isString(value) { return typeof value === 'string' || value instanceof String; }
+    API.isString = function(value) { return typeof value === 'string' || value instanceof String; };
 
-    var isArray = Array.isArray || function(arg) { // polyfill for Array.isArray()
+    API.isArray = Array.isArray || function(arg) { // polyfill for Array.isArray()
         return Object.prototype.toString.call(arg) === '[object Array]';
     };
 
-    function isCssColor(value) {
+    API.isCssColor = function(value) {
         return typeof CSS !== 'undefined' && CSS.supports ? CSS.supports('color', value) : null;
-    }
+    };
 
-    function isCssColorOrString(value) {
-        var isColor = isCssColor(value);
-        return isColor !== null ? isColor : isString(value);
-    }
+    API.isCssColorOrString = function(value) {
+        var isColor = API.isCssColor(value);
+        return isColor !== null ? isColor : API.isString(value);
+    };
 
     // --- Property Accessor/Modifier ---
 
-    function copyPropsNoCheck(propNames, fromObj, toObj) {
+    API.copyPropsNoCheck = function(propNames, fromObj, toObj) {
         for(var i = 0; i < propNames.length; i++) {
             var pn = propNames[i];
             toObj[pn] = fromObj[pn];
         }
-    }
+    };
 
-    function copyPropsAndCheck(propNames, fromObj, toObj, checker) {
+    API.copyPropsAndCheck = function(propNames, fromObj, toObj, checker) {
         for(var i = 0; i < propNames.length; i++) {
             var pn = propNames[i];
             var fpn = fromObj[pn];
             if(checker(fpn)) toObj[pn] = fpn;
         }
-    }
+    };
 
     // --- Formatter ---
 
-    function formatString(str, fmt) {
+    API.formatString = function(str, fmt) {
         return str.replace(/{(\w+)}/g, function(match, c) { // c is the value captured in the match
             return c in fmt ? fmt[c] : match;
         });
     }
 
-    function setStringPrototypeFormat() {
+    API.setStringPrototypeFormat = function() {
         if(String.prototype.format === undefined) {
             String.prototype.format = function() {
-                return formatString(this, arguments);
+                return API.formatString(this, arguments);
             };
             String.prototype.format.jsu = true;
             return true;
@@ -130,17 +132,17 @@ function() {
         }
         catch(e) {}
         return formatSetByJsu;
-    }
+    };
 
     // --- Parser ---
 
-    function parseInlineCssStyle(styleStr) {
+    API.parseInlineCssStyle = function(styleStr) {
         var elt = document.createElement('span');
         elt.style = styleStr;
         return elt.style; // a CSSStyleDeclaration object
-    }
+    };
 
-    function parseSuffixedValue(value) {
+    API.parseSuffixedValue = function(value) {
         var retVal = null;
         var match = (value + '').match(/^\s*(-?[0-9]+\.?[0-9]*)\s*([^\s]*(?:\s+[^\s]+)*)\s*$/); // ?: allows to not create a capturing group
         if(match !== null) {
@@ -150,21 +152,21 @@ function() {
             };
         }
         return retVal;
-    }
+    };
 
-    function parseSpaceAsPerJsonStringify(space) {
-        if(isNumber(space) && space >= 0) {
+    API.parseSpaceAsPerJsonStringify = function(space) {
+        if(API.isNumber(space) && space >= 0) {
             space = Math.min(Math.floor(space), 10);
             var spaceStr = '';
             for(var i = 0; i < space; i++)
                 spaceStr += ' ';
             return spaceStr;
         }
-        if(isString(space)) return space.substring(0, 10);
+        if(API.isString(space)) return space.substring(0, 10);
         return '';
-    }
+    };
 
-    function matchAllAndIndex(str, pattern, ignoreCase) {
+    API.matchAllAndIndex = function(str, pattern, ignoreCase) {
         // avoid implicit infinite matches (thus infinite loop) as explained in
         // the notes accompanying the documentation of this function concerning
         // the pattern parameter
@@ -180,11 +182,11 @@ function() {
             retVal[match.index] = match[0];
         }
         return Object.keys(retVal).length === 0 ? null : retVal;
-    }
+    };
 
-    function isolateMatchingData(str, pattern, ignoreCase) {
+    API.isolateMatchingData = function(str, pattern, ignoreCase) {
         var retVal = [];
-        var matchesByIndex = matchAllAndIndex(str, pattern, ignoreCase);
+        var matchesByIndex = API.matchAllAndIndex(str, pattern, ignoreCase);
         if(!matchesByIndex) matchesByIndex = {};
         for(var i = 0; i < str.length;) {
             var iHasAMatch = i in matchesByIndex;
@@ -197,43 +199,14 @@ function() {
             i += iStr.length;
         }
         return retVal;
-    }
+    };
 
-    function isolateMatchingValues(str, pattern, ignoreCase) {
-        return isolateMatchingData(str, pattern, ignoreCase).map(function(data) {
+    API.isolateMatchingValues = function(str, pattern, ignoreCase) {
+        return API.isolateMatchingData(str, pattern, ignoreCase).map(function(data) {
             return data.value;
         });
-    }
-
-    return {
-        'setLocalStorageItem': setLocalStorageItem,
-        'getLocalStorageItem': getLocalStorageItem,
-
-        'setEltVisible': setEltVisible,
-        'isEltVisible': isEltVisible,
-        'switchEltVisibility': switchEltVisibility,
-
-        'isBoolean': isBoolean,
-        'isNumber': isNumber,
-        'isNumberAlike': isNumberAlike,
-        'isString': isString,
-        'isArray': isArray,
-        'isCssColor': isCssColor,
-        'isCssColorOrString': isCssColorOrString,
-
-        'copyPropsNoCheck': copyPropsNoCheck,
-        'copyPropsAndCheck': copyPropsAndCheck,
-
-        'formatString': formatString,
-        'setStringPrototypeFormat': setStringPrototypeFormat,
-
-        'parseInlineCssStyle': parseInlineCssStyle,
-        'parseSuffixedValue': parseSuffixedValue,
-        'parseSpaceAsPerJsonStringify': parseSpaceAsPerJsonStringify,
-
-        'matchAllAndIndex': matchAllAndIndex,
-        'isolateMatchingData': isolateMatchingData,
-        'isolateMatchingValues': isolateMatchingValues,
     };
+
+    return API;
 }
 );

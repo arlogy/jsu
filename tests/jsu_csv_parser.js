@@ -5,6 +5,7 @@
 */
 
 const JsuCsvPsr = require('../src/jsu_csv_parser.js');
+
 const assert = require('assert');
 
 (function() {

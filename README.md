@@ -32,5 +32,6 @@ npm run test # run tests
 ```
 
 We use the following Node.js packages which were all installed using `npm install <package> --save-dev`.
-- Mocha for unit testing.
+- mocha for unit testing.
+- sinon for spies, stubs and mocks.
 - jsdom to imitate in a Node.js environment the behavior of a browser.
