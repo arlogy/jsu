@@ -207,6 +207,81 @@ function() {
         });
     };
 
+    // --- Others ---
+
+    function _cloneDeep(value, isArrayFunc, cache) {
+        switch(typeof value) {
+            case 'undefined':
+            case 'boolean':
+            case 'number':
+            case 'bigint':
+            case 'string':
+            case 'function':
+                return value;
+
+            case 'symbol':
+                return cache.get(value) || cache.add(value, Symbol(value.description));
+
+            case 'object': {
+                if(value === null) return value;
+
+                var copy = cache.get(value);
+                if(copy) return copy;
+                if(value instanceof Boolean) return cache.add(value, new Boolean(value.valueOf()));
+                if(value instanceof Date) return cache.add(value, new Date(value.valueOf()));
+                if(value instanceof Number) return cache.add(value, new Number(value.valueOf()));
+                if(value instanceof String) return cache.add(value, new String(value.valueOf()));
+
+                var i = undefined;
+                if(isArrayFunc(value)) {
+                    copy = [];
+                    cache.add(value, copy); // cache value before the recursive _cloneDeep() call below
+                    var valueLen = value.length;
+                    for(i = 0; i < valueLen; i++) {
+                        copy.push(_cloneDeep(value[i], isArrayFunc, cache));
+                    }
+                }
+                else {
+                    // clone object partially based on Object.keys()
+                    //     i.e. inherited and non-enumerable properties are ignored
+                    // but this is enough for object literals ({...}) only referencing value types handled in this function
+                    //     e.g. {x:3, y:{}, z:[null, {}, Symbol()]}
+                    // all the JavaScript built-in objects that one might want to support can be found at
+                    //     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
+                    copy = {};
+                    cache.add(value, copy); // cache value before the recursive _cloneDeep() call below
+                    var valueKeys = Object.keys(value);
+                    var valueKeysLen = valueKeys.length;
+                    for(i = 0; i < valueKeysLen; i++) {
+                        var prop = valueKeys[i];
+                        copy[prop] = _cloneDeep(value[prop], isArrayFunc, cache);
+                    }
+                }
+                return copy;
+            }
+
+            default: // will not be reached but still retained
+                return value;
+        }
+    }
+
+    API.cloneDeep = function(value) {
+        return _cloneDeep(value, API.isArray, {
+            _keys: [],
+            _vals: [],
+            get: function(key) {
+                var idx = this._keys.indexOf(key);
+                return idx !== -1 ? this._vals[idx] : undefined;
+            },
+            add: function(key, val) { // must be called only if get(key) did not find an entry
+                                      //     this is to prevent the key from being added more than once
+                this._keys.push(key);
+                this._vals.push(val);
+                return val;
+            },
+        });
+    };
+
     return API;
 }
 );

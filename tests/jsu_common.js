@@ -485,4 +485,160 @@ afterEach(() => {
             });
         });
     })();
+
+    (function() {
+        describe('cloneDeep()', () => {
+            const clnd = JsuCmn.cloneDeep;
+
+            // helps create objects that contain more than one reference to a given object
+            const cloneRefs = (obj) => [
+                clnd([obj, obj]),
+                Object.entries(clnd({a:obj, b:obj})).map(x => x[1]),
+            ];
+
+            it('should correctly clone undefined and null', () => {
+                [undefined, null].forEach(function(val) {
+                    assert.strictEqual(clnd(val), val);
+                });
+            });
+
+            it('should correctly clone a boolean', () => {
+                [true, false].forEach(function(val) {
+                    assert.strictEqual(clnd(val), val);
+                    const obj = new Boolean(val);
+                    assert.strictEqual(clnd(obj) instanceof Boolean, true);
+                    assert.strictEqual(clnd(obj).valueOf(), val);
+                    assert.strictEqual(clnd(obj) !== obj, true);
+                    cloneRefs(obj).forEach(function(arr) {
+                        assert.strictEqual(arr.every(x => x === arr[0]), true);
+                    });
+                });
+            });
+
+            it('should correctly clone a number', () => {
+                funcParams.filter(x => typeof x === 'number').forEach(function(val) {
+                    assert.strictEqual(clnd(val), val);
+                    const obj = new Number(val);
+                    assert.strictEqual(clnd(obj) instanceof Number, true);
+                    assert.strictEqual(clnd(obj).valueOf(), val);
+                    assert.strictEqual(clnd(obj) !== obj, true);
+                    cloneRefs(obj).forEach(function(arr) {
+                        assert.strictEqual(arr.every(x => x === arr[0]), true);
+                    });
+                });
+            });
+
+            it('should correctly clone a bigint', () => {
+                funcParams.filter(x => typeof x === 'bigint').forEach(function(val) {
+                    assert.strictEqual(clnd(val), val);
+                });
+            });
+
+            it('should correctly clone a string', () => {
+                funcParams.filter(x => typeof x === 'string').forEach(function(val) {
+                    assert.strictEqual(clnd(val), val);
+                    const obj = new String(val);
+                    assert.strictEqual(clnd(obj) instanceof String, true);
+                    assert.strictEqual(clnd(obj).valueOf(), val);
+                    assert.strictEqual(clnd(obj) !== obj, true);
+                    cloneRefs(obj).forEach(function(arr) {
+                        assert.strictEqual(arr.every(x => x === arr[0]), true);
+                    });
+                });
+            });
+
+            it('should correctly clone a function', () => {
+                [sinon.spy()].forEach(function(func) {
+                    assert.strictEqual(typeof clnd(func), 'function');
+                    clnd(func)();
+                    clnd(func)();
+                    assert.strictEqual(func.calledTwice, true);
+                });
+            });
+
+            it('should correctly clone a symbol', () => {
+                funcParams.filter(x => typeof x === 'symbol').forEach(function(val) {
+                    assert.strictEqual(typeof clnd(val), 'symbol');
+                    assert.strictEqual(clnd(val).description, val.description);
+                    assert.strictEqual(clnd(val) !== val, true);
+                });
+            });
+
+            it('should correctly clone a date', () => {
+                [new Date(), new Date('9999-12-31')].forEach(function(obj) {
+                    assert.strictEqual(clnd(obj) instanceof Date, true);
+                    assert.strictEqual(clnd(obj).valueOf(), obj.valueOf());
+                    assert.strictEqual(clnd(obj) !== obj, true);
+                    cloneRefs(obj).forEach(function(arr) {
+                        assert.strictEqual(arr.every(x => x === arr[0]), true);
+                    });
+                });
+            });
+
+            it('should correctly clone an array', () => {
+                const strictlyComparableValues = funcParams.filter(
+                    x => x === null || !['object', 'symbol'].includes(typeof x)
+                );
+                assert.strictEqual(strictlyComparableValues.length !== 0, true);
+                [[], ...strictlyComparableValues.map(x => [x])].forEach(function(arr) {
+                    assert.strictEqual(Array.isArray(clnd(arr)), true);
+                    assert.deepStrictEqual(clnd(arr), arr);
+                    assert.strictEqual(clnd(arr) !== arr, true);
+                });
+
+                const diff = funcParams.filter(x => !strictlyComparableValues.includes(x));
+                assert.strictEqual(diff.length !== 0, true);
+                diff.map(x => [x]).forEach(function(arr) {
+                    assert.strictEqual(Array.isArray(clnd(arr)), true);
+                    assert.deepStrictEqual(clnd(arr).every((x, i) => {
+                        // you can console.log(x) here if changes to funcParams cause tests to fail
+                        if(x instanceof Boolean || x instanceof Number || x instanceof String)
+                            return x.valueOf() === arr[i].valueOf();
+                        if(typeof x === 'symbol')
+                            return x.description === arr[i].description;
+                        if(
+                            Object.getPrototypeOf(x) === Object.prototype // plain object: literal ({...}) or new Object() for example
+                         || Array.isArray(x)
+                        )
+                            return JSON.stringify(x) === JSON.stringify(arr[i]);
+                        return false; // failure
+                    }), true);
+                    assert.strictEqual(clnd(arr) !== arr, true);
+                });
+            });
+
+            it('should correctly clone an object literal (having circular references)', () => {
+                const node = {x:dummy(), y:dummy()};
+                node.self = node;
+                node.children = [{parent:node}, {parent:node}];
+                node.z = dummy();
+                const nodeClone = clnd(node);
+                assert.deepStrictEqual(nodeClone, {
+                    x:node.x, y:node.y, self:nodeClone, children:[{parent:nodeClone}, {parent:nodeClone}], z:node.z,
+                });
+            });
+
+            it('should partially clone an arbitrary object', () => {
+                function Rectangle(width, height, depth) {
+                    this.width = width;
+                    this.height = height;
+                    const now = new Date();
+                    Object.defineProperty(this, '_createdAt', {
+                        get() { return now; },
+                        enumerable: false,
+                    });
+                }
+                Rectangle.prototype.area = function() { return this.height * this.width; };
+                const source = new Rectangle(1920, 1080);
+                const target = clnd(source);
+                assert.strictEqual(target !== source, true);
+                assert.strictEqual('area' in target, false); // inherited properties are ignored
+                assert.strictEqual('_createdAt' in target, false); // non-enumerable properties are ignored
+                assert.notDeepStrictEqual(target, source);
+                assert.strictEqual(Object.getPrototypeOf(target), Object.getPrototypeOf({}));
+                Object.setPrototypeOf(target, Rectangle.prototype);
+                assert.deepStrictEqual(target, source);
+            });
+        });
+    })();
 })();

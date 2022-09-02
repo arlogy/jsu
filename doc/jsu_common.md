@@ -28,6 +28,8 @@
     - [matchAllAndIndex()](#jsucmnmatchallandindexstr-pattern-ignorecase)
     - [isolateMatchingData()](#jsucmnisolatematchingdatastr-pattern-ignorecase)
     - [isolateMatchingValues()](#jsucmnisolatematchingvaluesstr-pattern-ignorecase)
+- Others
+    - [cloneDeep()](#jsucmnclonedeepvalue)
 
 ## JsuCmn.setLocalStorageItem(key, value)
 
@@ -273,3 +275,62 @@ values of the matches).
 - `ignoreCase`: see `JsuCmn.isolateMatchingData()`.
 
 For example, try `JsuCmn.isolateMatchingValues('these are words', '\\w+')`.
+
+## JsuCmn.cloneDeep(value)
+
+A limited, simple but useful deep clone implementation. Clones a value
+recursively and handles circular references correctly.
+- If `typeof value` is `'undefined'`, `'boolean'`, `'number'`, `'bigint'`,
+`'string'` or `'function'`: returns `value`.
+- If `typeof value` is `'symbol'`: returns `Symbol(value.description)`; see (1)
+below.
+- Otherwise (i.e. `typeof value` is `'object'`)
+    - If `value` is `null`: returns it.
+    - If `value instanceof X` where `X` is one of `Boolean`, `Date`, `Number` or
+    `String`: returns `new X(value.valueOf())`; see (1) below.
+    - If `Array.isArray(value)`: returns a new array `[...]` whose elements are
+    deep clones of those in `value`; see (1) below.
+    - Otherwise: `value` is treated as an object literal `{...}` (this is a
+    deliberate limitation for simplicity), and its properties are deep cloned
+    according to `Object.keys()`, i.e. inherited and non-enumerable properties
+    are ignored; the returned value is an object literal; see (1) below.
+
+(1) the returned value is cached and will be returned when the same reference to
+`value` is cloned again
+
+```javascript
+// Example
+(function() {
+    const node = {x:0, y:0}; node.self = node; node.children = [{parent:node}, {parent:node}];
+    const clone = JsuCmn.cloneDeep(node); clone.x = 10;
+    console.log(clone);
+    console.log(
+        clone === node,
+        clone.self === clone,
+        clone.children.every(x => x.parent === clone)
+    );
+})();
+```
+
+This function can be used to safely extend the jsu library. 
+
+```javascript
+// Example
+(function() {
+    const MyCmn = JsuCmn.cloneDeep(JsuCmn);
+    MyCmn.anyFunctionOfMyChoice = function() { console.log('anyFunctionOfMyChoice' in JsuCmn); };
+    MyCmn.anyFunctionOfMyChoice();
+})();
+```
+
+In Node.js environments however, you might want to use the lodash [`cloneDeep()`](https://lodash.com/docs/#cloneDeep)
+function which supports many other types of value.
+
+```javascript
+// Example
+(function() {
+    const {cloneDeep} = require('lodash'); // after `npm install lodash`
+    const node = {x:0}; node.prev = node; node.next = node; node.self = node;
+    console.log(cloneDeep(node));
+})();
+```
