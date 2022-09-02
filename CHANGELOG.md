@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 - 2022/09/02
+
+- Add `JsuCmn.cloneDeep(value)` for convenient deep cloning.
+
 ## 1.1.0 - 2022/07/22
 
 - Add `JsuCmn.isCssColorOrString(value)`: returns `JsuCmn.isCssColor(value)` if
