@@ -17,9 +17,14 @@
     }
 })(
 function() {
-    // for internal use only
     function isNumber(value) {
         return typeof value === 'number' && isFinite(value);
+    }
+
+    function createCustomEvent(typeStr, detailObj) {
+        return new CustomEvent(typeStr, {
+            'detail': detailObj,
+        });
     }
 
     var API = {};
@@ -59,29 +64,23 @@ function() {
             }
         }
 
-        function createCustomEvent(typeStr, detailObj) {
-            return new CustomEvent(typeStr, {
-                'detail': detailObj,
-            });
-        }
-
-        function start(delay) {
-            if(_running) return;
-            _running = true;
-            _delay = isNumber(delay) && delay >= 0 ? delay : 0;
-            _timeoutCount = 0;
-            _id = setInterval(timeout, _delay);
-        }
-
         function timeout() {
             timer.dispatchEvent(createCustomEvent('timeout', {
                 'count': ++_timeoutCount,
                 'source': timer,
             }));
-            if(_timeoutLimit !== -1 && _timeoutCount === _timeoutLimit) stop();
+            if(_timeoutLimit !== -1 && _timeoutCount === _timeoutLimit) timer.stop();
         }
 
-        function stop() {
+        timer.start = function(delay) {
+            if(_running) return;
+            _running = true;
+            _delay = isNumber(delay) && delay >= 0 ? delay : 0;
+            _timeoutCount = 0;
+            _id = setInterval(timeout, _delay);
+        };
+
+        timer.stop = function() {
             if(!_running) return;
             _running = false;
             clearInterval(_id);
@@ -90,10 +89,8 @@ function() {
                 'count': _timeoutCount,
                 'source': timer,
             }));
-        }
+        };
 
-        timer.start = start;
-        timer.stop = stop;
         timer.isRunning = function() { return _running; };
         timer.getDelay = function() { return _delay; };
         timer.getTimeoutCount = function() { return _timeoutCount; };
