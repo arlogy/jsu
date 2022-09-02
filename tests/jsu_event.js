@@ -42,16 +42,16 @@ afterEach(() => {
 
     (function() {
         describe('new JsuEvt.EventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
-            const cssTargets = [undefined, null, window.EventTarget];
+            const targetTypes = [undefined, null, window.EventTarget];
             it('should never fail', () => {
-                cssTargets.forEach(function(val) {
+                targetTypes.forEach(function(val) {
                     sinon.stub(global, 'EventTarget').value(val);
                     assert.strictEqual(new JsuEvt.EventTarget() instanceof JsuEvt.EventTarget, true);
                 });
             });
             it('should only have the expected properties', () => {
                 const expectedProps = ['addEventListener', 'dispatchEvent', 'removeEventListener'];
-                cssTargets.forEach(function(val) {
+                targetTypes.forEach(function(val) {
                     sinon.stub(global, 'EventTarget').value(val);
                     const eTarget = new JsuEvt.EventTarget();
                     assert.strictEqual(objectHasOnlyProperties(eTarget, expectedProps), true);
@@ -59,7 +59,7 @@ afterEach(() => {
             });
             it('should correctly handle event listeners', () => {
                 sinon.stub(global, 'Event').value(window.Event);
-                cssTargets.forEach(function(val) {
+                targetTypes.forEach(function(val) {
                     sinon.stub(global, 'EventTarget').value(val);
                     const eventPool = [
                         new Event('acc'), new Event('acc'), new Event('acc'),

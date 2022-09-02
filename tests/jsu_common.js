@@ -25,7 +25,7 @@ afterEach(() => {
 
     const falsyValues = funcParams.filter(x => !x);
     const valfalCssDisplays = [...cssDisplays, ...falsyValues]; // valid and falsy CSS displays
-    const numbers = funcParams.filter(n => typeof n === 'number' || typeof n === 'bigint');
+    const numbers = funcParams.filter(x => typeof x === 'number' || typeof x === 'bigint');
 
     function getCssDisplay(vis, dsp) {
         return vis ? (dsp && dsp !== 'none' ? dsp : 'revert')
@@ -136,10 +136,17 @@ afterEach(() => {
 
     (function() {
         describe('isNumber()', () => {
+            const values = [...funcParams, '-10', '0', '10.99']; // add finite numbers that are strings
+            const numIsFinite = Number.isFinite;
             it('should return true only for a finite number that is not a string', () => {
-                [...funcParams, '-10', '0', '10.99'].forEach(function(val) {
-                    const finiteNumber = typeof val === 'number' && isFinite(val); // using a polyfill of Number.isFinite
-                    assert.strictEqual(JsuCmn.isNumber(val), finiteNumber);
+                values.forEach(function(val) {
+                    assert.strictEqual(JsuCmn.isNumber(val), numIsFinite(val));
+                });
+            });
+            it('should behave correctly if Number.isFinite() is not available', () => {
+                sinon.stub(Number, 'isFinite').value(undefined);
+                values.forEach(function(val) {
+                    assert.strictEqual(JsuCmn.isNumber(val), numIsFinite(val));
                 });
             });
         });
@@ -150,8 +157,8 @@ afterEach(() => {
             it('should return true only for a finite number or a primitive string convertible to such a number', () => {
                 funcParams.forEach(function(val) {
                     const tov = typeof val;
-                    const finiteNumberOrString = (tov === 'number' || tov === 'string') && isFinite(val);
-                    assert.strictEqual(JsuCmn.isNumberAlike(val), finiteNumberOrString);
+                    const retVal = (tov === 'number' || tov === 'string') && isFinite(val);
+                    assert.strictEqual(JsuCmn.isNumberAlike(val), retVal);
                 });
             });
         });
@@ -169,10 +176,16 @@ afterEach(() => {
 
     (function() {
         describe('isArray()', () => {
+            const isArray = Array.isArray;
             it('should return true only for an array', () => {
                 funcParams.forEach(function(val) {
-                    const arrayObject = Object.prototype.toString.call(val) === '[object Array]'; // using a polyfill of Array.isArray()
-                    assert.strictEqual(JsuCmn.isArray(val), arrayObject);
+                    assert.strictEqual(JsuCmn.isArray(val), isArray(val));
+                });
+            });
+            it('should behave correctly if Array.isArray() is not available', () => {
+                sinon.stub(Array, 'isArray').value(undefined);
+                funcParams.forEach(function(val) {
+                    assert.strictEqual(JsuCmn.isArray(val), isArray(val));
                 });
             });
         });
@@ -339,20 +352,20 @@ afterEach(() => {
                     assert.deepStrictEqual(JsuCmn.parseSuffixedValue(val), null);
                 });
             });
-            const nums = numbers.filter(n => n !== Number.POSITIVE_INFINITY && n !== Number.NEGATIVE_INFINITY && !Number.isNaN(n));
+            const nums = numbers.filter(x => x !== Number.POSITIVE_INFINITY && x !== Number.NEGATIVE_INFINITY && !Number.isNaN(x));
             it('should correctly parse a valid number', () => {
-                nums.forEach(function(n) {
-                    const pn = parseFloat(n); // parsed n
-                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue(n), {number:pn, suffix:''});
-                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue(n+''), {number:pn, suffix:''});
-                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue(' \t'+n+'\t '), {number:pn, suffix:''});
+                nums.forEach(function(x) {
+                    const p = parseFloat(x); // parsed x
+                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue(x), {number:p, suffix:''});
+                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue(x+''), {number:p, suffix:''});
+                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue(' \t'+x+'\t '), {number:p, suffix:''});
                 });
             });
             it('should correctly parse a valid suffixed string', () => {
-                nums.forEach(function(n) {
-                    const pn = parseFloat(n); // parsed n
-                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue('\t'+n+'\t pixels \t'), {number:pn, suffix:'pixels'});
-                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue('\t'+n+'\t pixel units \t'), {number:pn, suffix:'pixel units'});
+                nums.forEach(function(x) {
+                    const p = parseFloat(x); // parsed x
+                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue('\t'+x+'\t pixels \t'), {number:p, suffix:'pixels'});
+                    assert.deepStrictEqual(JsuCmn.parseSuffixedValue('\t'+x+'\t pixel units \t'), {number:p, suffix:'pixel units'});
                 });
             });
         });

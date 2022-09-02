@@ -17,7 +17,7 @@
     }
 })(
 function() {
-    const API = {};
+    var API = {};
 
     // --- Local Storage ---
 

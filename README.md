@@ -6,12 +6,16 @@ or poor performance in newer browsers. Support for Internet Explorer is not an
 option as Microsoft Edge is its successor.
 
 The features provided by jsu were originally part of the [nvc](https://github.com/arlogy/nvc)
-project. Most of these features, such as type checking or timer events can be
+project. Some of these features, such as type checking or timer events can be
 found in other utility libraries. In case you find these libraries too large as
 a dependency, or if they require too new JavaScript technologies, among other
-disadvantages, you can use jsu as a possible fallback. For example,
-[jsu_event.js](https://github.com/arlogy/jsu/blob/main/src/jsu_event.js)
+disadvantages, you can use jsu as a possible fallback. For example, [jsu_event.js](src/jsu_event.js)
 supports generic and timer events in just a few lines of code.
+
+Also note that type checking is need-specific, i.e. not all use cases will
+accept a boolean object as a boolean, or a numeric string or an infinite number
+as a number. So even jsu implementation might not be of any help in checking
+data types.
 
 Overall, jsu is not a substitute for libraries such as jQuery or others with
 convenient functions like [isEqual()](https://underscorejs.org/#isEqual)
@@ -19,8 +23,8 @@ performing deep comparison of arbitrary objects.
 
 ## How-To
 
-Documentation and examples are available [here](https://github.com/arlogy/jsu/tree/main/doc).
-Version changelog is [here](https://github.com/arlogy/jsu/blob/main/CHANGELOG.md).
+Documentation and examples are available [here](doc).
+Version changelog is [here](CHANGELOG.md).
 
 ## Tests
 
@@ -28,7 +32,7 @@ Version changelog is [here](https://github.com/arlogy/jsu/blob/main/CHANGELOG.md
 git clone <project_git_uri>
 cd <project_dir>/
 npm install
-npm run test # run tests
+npm run test # run all tests
 ```
 
 We use the following Node.js packages which were all installed using `npm install <package> --save-dev`.

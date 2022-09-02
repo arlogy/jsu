@@ -171,11 +171,11 @@ operator; e.g. array, object, `arguments` for variadic functions, etc.
 ## JsuCmn.setStringPrototypeFormat()
 
 Sets `String.prototype.format` to allow syntactic sugar.
-    - `myString.format()` instead of `JsuCmn.formatString(myString, [])` (even
-    though these are useless as no formatting will take place)
-    - `myString.format(a)` instead of `JsuCmn.formatString(myString, [a])`
-    - `myString.format(a, b)` instead of `JsuCmn.formatString(myString, [a, b])`
-    - and so on and so forth
+- `myString.format()` instead of `JsuCmn.formatString(myString, [])` (even
+though these are useless as no formatting will take place).
+- `myString.format(a)` instead of `JsuCmn.formatString(myString, [a])`.
+- `myString.format(a, b)` instead of `JsuCmn.formatString(myString, [a, b])`.
+- and so on and so forth.
 
 Succeeds (and returns `true`) if `String.prototype.format` is `undefined` or was
 previously set using `JsuCmn.setStringPrototypeFormat()`; fails (and returns
@@ -215,9 +215,9 @@ also captured if any. Whitespaces before and after the numeric are ignored, as
 are those after the suffix string.
 
 Examples:
-    - `' 20 '` yields `20` and `''`.
-    - `'-20 px '` yields `-20` and `'px'`.
-    - `'-20 px units '` yields `-20` and `'px units'`.
+- `' 20 '` yields `20` and `''`.
+- `'-20 px '` yields `-20` and `'px'`.
+- `'-20 px units '` yields `-20` and `'px units'`.
 
 ## JsuCmn.parseSpaceAsPerJsonStringify(space)
 

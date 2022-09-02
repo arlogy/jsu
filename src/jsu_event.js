@@ -22,7 +22,7 @@ function() {
         return typeof value === 'number' && isFinite(value);
     }
 
-    const API = {};
+    var API = {};
 
     API.EventTarget = function() {
         var target = null;

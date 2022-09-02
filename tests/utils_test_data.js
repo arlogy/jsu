@@ -25,12 +25,14 @@ const cssDisplays = Object.freeze([
 const pi = 3.14159265359;
 
 // values picked so that one can easily spot bugs when switching between
-// Math.round(), Math.floor, ... from one function implementation to another for
-// example
+// Math.round(), Math.floor(), ... from one function implementation to another
+// for example
 const numbers = [
     -99, -20, -pi, -1.75, -1.5, -1.25, -1, -0.75, -0.5, -0.25, 0,
      99,  20,  pi,  1.75,  1.5,  1.25,  1,  0.75,  0.5,  0.25,
 ];
+
+const strings = ['', '0', '1', 'a', 'az'];
 
 // list of parameters that can be passed to a function, taking into account
 // different data types and key values for each type; they are based on the
@@ -41,9 +43,9 @@ const funcParams = Object.freeze([
     undefined,
     null,
     true, false, new Boolean(true), new Boolean(false),
-    ...numbers, ...numbers.map(n => new Number(n)), Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, NaN,
+    ...numbers, ...numbers.map(x => new Number(x)), Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, NaN,
     BigInt(1), BigInt(Number.MAX_SAFE_INTEGER) + 1n,
-    '', '0', '1', 'a', 'az', new String(''), new String('0'), new String('1'), new String('a'), new String('az'),
+    ...strings, ...strings.map(x => new String(x)),
     Symbol(), Symbol('a'),
     {}, [], [[], []], function() {}, () => {},
 ]);

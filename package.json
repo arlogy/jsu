@@ -9,11 +9,7 @@
     "src/"
   ],
   "scripts": {
-    "test": "echo Running tests... && npm run test:_index -s && npm run test:common -s && npm run test:csv_parser -s && npm run test:event -s && echo Finished!",
-    "test:_index": "mocha ./tests/_index.js",
-    "test:common": "mocha ./tests/jsu_common.js",
-    "test:csv_parser": "mocha ./tests/jsu_csv_parser.js",
-    "test:event": "mocha ./tests/jsu_event.js"
+    "test": "echo Running tests... && mocha ./tests/_index.js ./tests/jsu*.js && echo Finished!"
   },
   "repository": {
     "type": "git",
