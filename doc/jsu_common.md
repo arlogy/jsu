@@ -39,7 +39,7 @@ already a string, so it is better to pass a string to avoid conversion from
 `null` to `'null'` for example.
 - `value`: the value to save in storage; can be retrieved on success using `key`
 with `JsuCmn.getLocalStorageItem()`; converted to string if not already a
-string, so a number or a boolean is acceptable, but not an object or null for
+string, so a number or a boolean is acceptable, but not an object or `null` for
 example because `{}` will become `'[object Object]'`.
 
 ## JsuCmn.getLocalStorageItem(key)
@@ -71,8 +71,8 @@ property (e.g. `'inline'`, `'block'`, etc.).
 are not an option.*
 
 Returns whether an HTML element is visible, comparing its display style to
-`'none'`. Note that an HTML element is considered visible if and only if its
-display style is not `'none'`.
+`'none'`. The HTML element is considered visible if and only if its display
+style is not `'none'`.
 - elt: the element whose visibility state is to be returned; could be the result
 of `document.getElementById()` for example.
 
@@ -84,7 +84,8 @@ are not an option.*
 Toggles the visibility of an HTML element.
 - `elt`: the HTML element whose visibility is to be toggled; could be the result
 of `document.getElementById()` for example.
-- `dsp`: optional display style; see `JsuCmn.setEltVisible()`.
+- `dsp`: optional display style; see `JsuCmn.setEltVisible()`; this function
+actually does `JsuCmn.setEltVisible(elt, !JsuCmn.isEltVisible(elt), dsp)`.
 
 ## JsuCmn.isBoolean(value)
 
@@ -111,9 +112,9 @@ Returns whether a value is an array.
 
 Returns `CSS.supports('color', value)` if `CSS.supports` is set, or `null`
 otherwise. Note that this function returns a boolean value only when CSS color
-is available, otherwise it returns `null`. For this reason, sometimes you might
-want to use `JsuCmn.isCssColorOrString()` instead, so that `value` is not
-rejected just because color checking is not available.
+checking is available, otherwise it returns `null`. For this reason, sometimes
+you might want to use `JsuCmn.isCssColorOrString()` instead, so that `value` is
+not rejected just because color checking is not available.
 
 ## JsuCmn.isCssColorOrString(value)
 
@@ -159,7 +160,7 @@ in the format definition.
 operator; e.g. array, object, `arguments` for variadic functions, etc.
 
 ```javascript
-// Examples
+// Example
 (function() {
     const format = JsuCmn.formatString;
     console.log( format('{0}', ['zero']) ); // zero
@@ -172,9 +173,9 @@ operator; e.g. array, object, `arguments` for variadic functions, etc.
 
 ## JsuCmn.setStringPrototypeFormat()
 
-Sets `String.prototype.format` to allow syntactic sugar.
+Sets `String.prototype.format` to allow syntactic sugar:
 - `myString.format()` instead of `JsuCmn.formatString(myString, [])` (even
-though these are useless as no formatting will take place).
+though these statements are useless as no formatting will take place).
 - `myString.format(a)` instead of `JsuCmn.formatString(myString, [a])`.
 - `myString.format(a, b)` instead of `JsuCmn.formatString(myString, [a, b])`.
 - and so on and so forth.
@@ -190,7 +191,7 @@ object whose properties are initialized according to the parsed CSS rules.
 - `styleStr`: the CSS style string to parse.
 
 ```javascript
-// Examples
+// Example
 (function() {
     [
         'font-family: Arial; font-size: 12px;',
@@ -198,6 +199,7 @@ object whose properties are initialized according to the parsed CSS rules.
         // note that shorthand properties like 'font' can set several properties at once: 'font-family', 'font'size', ...
     ].forEach(function(styleStr) {
         const obj = JsuCmn.parseInlineCssStyle(styleStr);
+        console.log(obj);
         console.log(obj.fontFamily, obj.fontSize);
     });
 })();
@@ -216,10 +218,14 @@ number using the JavaScript `parseFloat()` function and the suffix substring is
 also captured if any. Whitespaces before and after the numeric are ignored, as
 are those after the suffix string.
 
-Examples:
-- `' 20 '` yields `20` and `''`.
-- `'-20 px '` yields `-20` and `'px'`.
-- `'-20 px units '` yields `-20` and `'px units'`.
+```javascript
+// Example
+(function() {
+    console.log(JsuCmn.parseSuffixedValue(' 20 ')); // captures 20 and ''
+    console.log(JsuCmn.parseSuffixedValue('-20 px ')); // captures -20 and 'px'
+    console.log(JsuCmn.parseSuffixedValue('-20 px units ')); // captures -20 and 'px units'
+})();
+```
 
 ## JsuCmn.parseSpaceAsPerJsonStringify(space)
 
@@ -227,6 +233,16 @@ Parses a space according to the space parameter of the JavaScript `JSON.stringif
 function and returns the parsed value (a string). Can be used when implementing
 export features allowing content indentation for example.
 - `space`: the space to parse.
+
+```javascript
+// Example
+(function() {
+    for(let indents of [undefined, null, 2, ' '.repeat(4)]) {
+        indents = JsuCmn.parseSpaceAsPerJsonStringify(indents);
+        console.log(`\n<div>\n${indents}<span>...</span>\n</div>`);
+    }
+})();
+```
 
 ## JsuCmn.matchAllAndIndex(str, pattern, ignoreCase)
 
@@ -239,7 +255,15 @@ the JavaScript `RegExp()` constructor.
 - `ignoreCase`: optional; indicates whether case sensitivity must be ignored
 when matching `str`; defaults to `false`.
 
-For example, try `JsuCmn.matchAllAndIndex('these are words', '\\w+')`.
+```javascript
+// Example
+(function() {
+    const obj = JsuCmn.matchAllAndIndex('these are words', '\\w+');
+    console.log(obj); // { '0': 'these', '6': 'are', '10': 'words' }
+    for(prop in obj) console.log(prop, typeof prop); // `typeof prop` will be 'string' as coerced by JavaScript
+    console.log(obj[0], obj['0']); // both properties are valid for obj
+})();
+```
 
 Notes on the `pattern` parameter.
 - Be aware that regular expression patterns such as `''`, `'.*'` or others will
@@ -264,7 +288,21 @@ and the input string have comparable content but their length might be different
 - `pattern`: see `JsuCmn.matchAllAndIndex()`.
 - `ignoreCase`: see `JsuCmn.matchAllAndIndex()`.
 
-For example, try `JsuCmn.isolateMatchingData('these are words', '\\w+')`.
+```javascript
+// Example
+(function() {
+    const str = 'these are words', pattern = '\\w+';
+    console.log(JsuCmn.matchAllAndIndex(str, pattern)); // { '0': 'these', '6': 'are', '10': 'words' }
+    console.log(JsuCmn.isolateMatchingData(str, pattern));
+    // [
+    //     { value: 'these', matched: true,  index: 0 },
+    //     { value: ' ',     matched: false, index: 5 },
+    //     { value: 'are',   matched: true,  index: 6 },
+    //     { value: ' ',     matched: false, index: 9 },
+    //     { value: 'words', matched: true,  index: 10 }
+    // ]
+})();
+```
 
 ## JsuCmn.isolateMatchingValues(str, pattern, ignoreCase)
 
@@ -274,7 +312,22 @@ values of the matches).
 - `pattern`: see `JsuCmn.isolateMatchingData()`.
 - `ignoreCase`: see `JsuCmn.isolateMatchingData()`.
 
-For example, try `JsuCmn.isolateMatchingValues('these are words', '\\w+')`.
+```javascript
+// Example
+(function() {
+    const str = 'these are words', pattern = '\\w+';
+    console.log(JsuCmn.matchAllAndIndex(str, pattern)); // { '0': 'these', '6': 'are', '10': 'words' }
+    console.log(JsuCmn.isolateMatchingData(str, pattern));
+    // [
+    //     { value: 'these', matched: true,  index: 0 },
+    //     { value: ' ',     matched: false, index: 5 },
+    //     { value: 'are',   matched: true,  index: 6 },
+    //     { value: ' ',     matched: false, index: 9 },
+    //     { value: 'words', matched: true,  index: 10 }
+    // ]
+    console.log(JsuCmn.isolateMatchingValues(str, pattern)); // [ 'these', ' ', 'are', ' ', 'words' ]
+})();
+```
 
 ## JsuCmn.cloneDeep(value)
 
@@ -305,9 +358,9 @@ below.
     const clone = JsuCmn.cloneDeep(node); clone.x = 10;
     console.log(clone);
     console.log(
-        clone === node,
-        clone.self === clone,
-        clone.children.every(x => x.parent === clone)
+        clone === node, // false
+        clone.self === clone, // true
+        clone.children.every(x => x.parent === clone) // true
     );
 })();
 ```

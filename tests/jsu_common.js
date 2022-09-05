@@ -388,6 +388,15 @@ afterEach(() => {
 
     (function() {
         describe('matchAllAndIndex() & isolateMatchingData() & isolateMatchingValues()', () => {
+            it('should not loop indefinitely when the pattern is the empty string', () => {
+                ['', dummy()].forEach(function(val) {
+                    // no assertion here because test case will not continue in case of infinite loop
+                    JsuCmn.matchAllAndIndex(val, '');
+                    JsuCmn.isolateMatchingData(val, '');
+                    JsuCmn.isolateMatchingValues(val, '');
+                });
+            });
+
             it('should correctly indicate that no match was found', () => {
                 assert.deepStrictEqual(JsuCmn.matchAllAndIndex('', '\\w+'), null);
                 assert.deepStrictEqual(JsuCmn.isolateMatchingData('', '\\w+'), []);

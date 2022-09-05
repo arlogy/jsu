@@ -5,29 +5,33 @@
 
 ## JsuEvt.EventTarget()
 
-Constructor function implementing the JavaScript EventTarget interface. Returns
-a new object hosting functions of the interface thereof as custom properties.
-The returned object can be extended with new properties if necessary.
+Constructor function implementing the JavaScript `EventTarget` interface.
+Returns a new object hosting functions of the interface thereof as custom
+properties. The returned object can be extended with new properties if
+necessary.
 
 ```javascript
 // Example
 (function() {
     const accelerate = function(e) { console.log('speed increased!'); };
     const decelerate = function(e) { console.log('speed decreased!'); };
-    
+
     const eTarget = new JsuEvt.EventTarget();
     eTarget.addEventListener('faster', accelerate);
     eTarget.addEventListener('slower', decelerate);
-    
+
+    // events will be dispatched
     eTarget.dispatchEvent(new Event('faster'));
     eTarget.dispatchEvent(new Event('faster'));
     eTarget.dispatchEvent(new Event('slower'));
-    
+
     eTarget.removeEventListener('faster', accelerate);
     eTarget.removeEventListener('slower', decelerate);
+
+    // events will not be dispatched
     eTarget.dispatchEvent(new Event('faster'));
     eTarget.dispatchEvent(new Event('slower'));
-}();
+})();
 ```
 
 ## JsuEvt.createTimer(config)
@@ -50,12 +54,12 @@ sent to the timer only after it has stopped.
 - `stop()`: stops the timer; does nothing if the timer is not running.
 - `isRunning()`: returns whether the timer is running (i.e. it has been started
 but not stopped).
-- `getDelay()`: returns the delay value set on `start()`.
+- `getDelay()`: returns the delay value set internally on `start()`.
 - `getTimeoutCount()`: returns the number of times the timer has timed out since
 `start()`; so the number of timeouts is only cleared on `start()`, not when
 `stop()` is called.
-- `getTimeoutLimit()`: returns the timeout limit configured for the timer upon
-creation.
+- `getTimeoutLimit()`: returns the timeout limit set internally for the timer
+upon creation.
 - `isSingleShot()`: returns whether the timeout limit is 1 (i.e. the timer is a
 single-shot timer).
 

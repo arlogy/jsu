@@ -203,7 +203,7 @@ Useful for parsing unrelated CSV content with a single parser.
     const parser = new JsuCsvPsr({'fieldSeparators': ['-']});
     for(const data of csvData)
         parser.readChunk(data);
-    parser.flush(); // this is necessary because the last line is csvData does not end with a line separator
+    parser.flush(); // this is necessary because the last line in csvData does not end with a line separator
     console.log(parser.getRecordsRef()); // you can ignore the first line if it is a header line for example
 })();
 ```
