@@ -5,10 +5,10 @@
 
 ## JsuEvt.EventTarget()
 
-Constructor function implementing the JavaScript `EventTarget` interface.
-Returns a new object hosting functions of the interface thereof as custom
-properties. The returned object can be extended with new properties if
-necessary.
+Constructor function to create an object that can be used according to the
+JavaScript `EventTarget` interface. The returned object hosts functions of the
+interface thereof as custom properties and can be extended with new properties
+if necessary.
 
 ```javascript
 // Example

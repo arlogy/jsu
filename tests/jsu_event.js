@@ -159,7 +159,7 @@ afterEach(() => {
                 });
 
                 // passed one argument (onFinished) to it(); see the 'asynchronous code' section in the Mocha documentation
-                it('should cause the timer to timeout and stop accordingly', function(onFinished) {
+                it('should cause the timer to start, timeout and stop accordingly', function(onFinished) {
                     this.timeout(3000); // set timeout limit for the test case
                     // set a limit for numbers so that each timer doesn't take too long before it times out
                     const entries = timeDels.filter(e => !isNumber(e) || e <= testLimit);
@@ -170,31 +170,33 @@ afterEach(() => {
                         entries.forEach(function(delay) {
                             const rdelay = convertDelay(delay);
                             const timer = JsuEvt.createTimer({timeoutLimit:limit});
-                            assert.strictEqual('testTimeoutCount' in timer, false);
-                            timer.testTimeoutCount = 0; // custom data
+                            assert.strictEqual('testData' in timer, false);
+                            timer.testData = { // custom data
+                                timeoutCount: 0,
+                            };
                             timer.addEventListener('timeout', function(e) {
-                                timer.testTimeoutCount++;
+                                timer.testData.timeoutCount++;
                                 assert.strictEqual(e instanceof CustomEvent, true);
-                                assert.deepStrictEqual(e.detail, {count:timer.testTimeoutCount, source:timer});
+                                assert.deepStrictEqual(e.detail, {count:timer.testData.timeoutCount, source:timer});
                                 assert.strictEqual(timer.isRunning(), true);
                                 assert.strictEqual(timer.getDelay(), rdelay);
-                                assert.strictEqual(timer.getTimeoutCount(), timer.testTimeoutCount);
+                                assert.strictEqual(timer.getTimeoutCount(), timer.testData.timeoutCount);
                                 assert.strictEqual(timer.getTimeoutLimit(), rlimit);
                                 assert.strictEqual(timer.isSingleShot(), rlimit === 1);
                                 if(timer.getTimeoutLimit() !== NTL) {
                                     // no need to stop() the timer as it is supposed to timeout as many times as requested
                                 }
                                 else {
-                                    if(timer.testTimeoutCount === 51) // just to stop the timer
+                                    if(timer.testData.timeoutCount === 51) // just to stop the timer
                                         timer.stop();
                                 }
                             });
                             timer.addEventListener('stopped', function(e) {
                                 assert.strictEqual(e instanceof CustomEvent, true);
-                                assert.deepStrictEqual(e.detail, {count:timer.testTimeoutCount, source:timer});
+                                assert.deepStrictEqual(e.detail, {count:timer.testData.timeoutCount, source:timer});
                                 assert.strictEqual(timer.isRunning(), false);
                                 assert.strictEqual(timer.getDelay(), rdelay);
-                                assert.strictEqual(timer.getTimeoutCount(), timer.testTimeoutCount);
+                                assert.strictEqual(timer.getTimeoutCount(), timer.testData.timeoutCount);
                                 assert.strictEqual(timer.getTimeoutLimit(), rlimit);
                                 assert.strictEqual(timer.isSingleShot(), rlimit === 1);
                                 // complete the test case when all timers created in the nested for loops are stopped
