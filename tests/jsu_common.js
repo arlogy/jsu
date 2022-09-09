@@ -272,11 +272,17 @@ afterEach(() => {
     (function() {
         describe('formatString()', () => {
             it('should correctly format a string', () => {
-                assert.strictEqual(JsuCmn.formatString('{0}', ['zero']), 'zero');
-                assert.strictEqual(JsuCmn.formatString('{1}', ['zero', 'one']), 'one');
-                assert.strictEqual(JsuCmn.formatString('{1}', ['one']), '{1}');
-                assert.strictEqual(JsuCmn.formatString('{0} {1} {0}', ['{1}', 'one']), '{1} one {1}');
-                assert.strictEqual(JsuCmn.formatString('x={x} y={?} z={z} x^2={x}*{x}', {x:0, y:1}), 'x=0 y={?} z={z} x^2=0*0');
+                [
+                  //[param1,                          param2,          expectedResult]
+                    ['{0}',                           ['zero'],        'zero'],
+                    ['{1}',                           ['zero', 'one'], 'one'],
+                    ['{1}',                           ['one'],         '{1}'],
+                    ['{0} {1} {0}',                   ['{1}', 'one'],  '{1} one {1}'],
+                    ['x={x} y={?} z={z} x^2={x}*{x}', {x:0, y:1},      'x=0 y={?} z={z} x^2=0*0'],
+                ].forEach(function(arr) {
+                    assert.strictEqual(JsuCmn.formatString(arr[0], arr[1]), arr[2]);
+                    assert.strictEqual(JsuCmn.formatString(new String(arr[0]), arr[1]), arr[2]);
+                });
             });
         });
     })();
@@ -296,7 +302,9 @@ afterEach(() => {
                 assert.strictEqual(JsuCmn.setStringPrototypeFormat(), true); // format function can be set again
                 [[], [0], [0, 1], [0, 1, 2]].forEach(function(arr) {
                     // make sure the formatting is correct
-                    assert.strictEqual('{0}{1}{0}'.format(...arr), JsuCmn.formatString('{0}{1}{0}', arr));
+                    const str = '{0}{1}{0}';
+                    assert.strictEqual(str.format(...arr), JsuCmn.formatString(str, arr));
+                    assert.strictEqual(new String(str).format(...arr), JsuCmn.formatString(str, arr));
                 });
             });
             it('should fail otherwise', () => {
@@ -311,36 +319,48 @@ afterEach(() => {
     (function() {
         describe('parseInlineCssStyle()', () => {
             it('should correctly parse a single CSS rule', () => {
-                ['Wrong', 'Arial'].forEach(function(val) {
-                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+'; just-ignore-me').fontFamily, val);
-                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+'; ').fontFamily, val);
-                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val+';').fontFamily, val);
-                    assert.strictEqual(JsuCmn.parseInlineCssStyle('font-family:'+val).fontFamily, val);
+                ['Wrong', 'Arial'].forEach(function(fontFamily) {
+                    [
+                        'font-family:'+fontFamily+'; just-ignore-me',
+                        'font-family:'+fontFamily+'; ',
+                        'font-family:'+fontFamily+';',
+                        'font-family:'+fontFamily,
+                    ].forEach(function(styleStr) {
+                        assert.strictEqual(JsuCmn.parseInlineCssStyle(styleStr).fontFamily, fontFamily);
+                        assert.strictEqual(JsuCmn.parseInlineCssStyle(new String(styleStr)).fontFamily, fontFamily);
+                    });
                 });
                 assert.strictEqual(JsuCmn.parseInlineCssStyle('font-size:12px;').fontSize, '12px');
+                assert.strictEqual(JsuCmn.parseInlineCssStyle(new String('font-size:12px;')).fontSize, '12px');
                 assert.strictEqual(JsuCmn.parseInlineCssStyle('font-size:12').fontSize, '');
+                assert.strictEqual(JsuCmn.parseInlineCssStyle(new String('font-size:12')).fontSize, '');
             });
             it('should correctly parse multiple CSS rules', () => {
-                const obj = JsuCmn.parseInlineCssStyle('font-family:Arial; font-size:12px');
-                assert.strictEqual(obj.fontFamily, 'Arial');
-                assert.strictEqual(obj.fontSize, '12px');
+                const styleStr = 'font-family:Arial; font-size:12px';
+                [styleStr, new String(styleStr)].forEach(function(val) {
+                    const obj = JsuCmn.parseInlineCssStyle(val);
+                    assert.strictEqual(obj.fontFamily, 'Arial');
+                    assert.strictEqual(obj.fontSize, '12px');
+                });
             });
             it('should correctly parse a short-hand CSS rule', () => {
                 // rule is taken from CSS font documentation and should set each of the following
                 //     style | variant | weight | stretch | size/line-height | family
                 const font = 'italic small-caps bolder condensed 16px/3 cursive';
                 const rule = 'font: '+font+';';
-                const obj = JsuCmn.parseInlineCssStyle(rule);
-                assert.strictEqual(obj.fontStyle, 'italic');
-                assert.strictEqual(obj.fontVariant, 'small-caps');
-                assert.strictEqual(obj.fontWeight, 'bolder');
-                assert.strictEqual(obj.fontFamily, 'cursive');
-                // it seems that jsdom sets the following obj properties differently when parseInlineCssStyle() is called
-                //     they are therefore commented in the test case
+                [rule, new String(rule)].forEach(function(val) {
+                    const obj = JsuCmn.parseInlineCssStyle(val);
+                    assert.strictEqual(obj.fontStyle, 'italic');
+                    assert.strictEqual(obj.fontVariant, 'small-caps');
+                    assert.strictEqual(obj.fontWeight, 'bolder');
+                    assert.strictEqual(obj.fontFamily, 'cursive');
+                    // it seems that jsdom sets the following obj properties differently when parseInlineCssStyle() is called
+                    //     they are therefore commented in the test case
 //                    assert.strictEqual(obj.font.split(' ').sort().join(' '), font.split(' ').sort().join(' '));
 //                    assert.strictEqual(obj.fontStretch, 'condensed');
 //                    assert.strictEqual(obj.fontSize, '16px');
 //                    assert.strictEqual(obj.fontLineHeight, '3');
+                });
             });
         });
     })();
@@ -389,7 +409,9 @@ afterEach(() => {
     (function() {
         describe('matchAllAndIndex() & isolateMatchingData() & isolateMatchingValues()', () => {
             it('should not loop indefinitely when the pattern is the empty string', () => {
-                ['', dummy()].forEach(function(val) {
+                const arr = ['', dummy()];
+                arr.push(...arr.map(x => new String(x)));
+                arr.forEach(function(val) {
                     // no assertion here because test case will not continue in case of infinite loop
                     JsuCmn.matchAllAndIndex(val, '');
                     JsuCmn.isolateMatchingData(val, '');
@@ -398,99 +420,143 @@ afterEach(() => {
             });
 
             it('should correctly indicate that no match was found', () => {
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('', '\\w+'), null);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('', '\\w+'), []);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('', '\\w+'), []);
+                let str = undefined, pattern = undefined, results = undefined;
 
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('no digits', '[0-9]'), null);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('no digits', '[0-9]'), [
-                    {value:'n', matched:false, index:0},
-                    {value:'o', matched:false, index:1},
-                    {value:' ', matched:false, index:2},
-                    {value:'d', matched:false, index:3},
-                    {value:'i', matched:false, index:4},
-                    {value:'g', matched:false, index:5},
-                    {value:'i', matched:false, index:6},
-                    {value:'t', matched:false, index:7},
-                    {value:'s', matched:false, index:8},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('no digits', '[0-9]'), [
-                    'n', 'o', ' ', 'd', 'i', 'g', 'i', 't', 's',
-                ]);
+                str = ''; pattern = '\\w+'; results = [null, [], []];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern), results[2]);
+                });
+
+                str = 'no digits'; pattern = '[0-9]'; results = [
+                    null,
+                    [
+                        {value:'n', matched:false, index:0},
+                        {value:'o', matched:false, index:1},
+                        {value:' ', matched:false, index:2},
+                        {value:'d', matched:false, index:3},
+                        {value:'i', matched:false, index:4},
+                        {value:'g', matched:false, index:5},
+                        {value:'i', matched:false, index:6},
+                        {value:'t', matched:false, index:7},
+                        {value:'s', matched:false, index:8},
+                    ],
+                    ['n', 'o', ' ', 'd', 'i', 'g', 'i', 't', 's'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern), results[2]);
+                });
             });
 
             it('should correctly indicate that matches have been found', () => {
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('these are words', '\\w+'), {0:'these', 6:'are', 10:'words'});
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('these are words', '\\w+'), [
-                    {value:'these', matched:true, index:0},
-                    {value:' ', matched:false, index:5},
-                    {value:'are', matched:true, index:6},
-                    {value:' ', matched:false, index:9},
-                    {value:'words', matched:true, index:10},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('these are words', '\\w+'), [
-                    'these', ' ', 'are', ' ', 'words',
-                ]);
+                const str = 'these are words', pattern = '\\w+', results = [
+                    {0:'these', 6:'are', 10:'words'},
+                    [
+                        {value:'these', matched:true, index:0},
+                        {value:' ', matched:false, index:5},
+                        {value:'are', matched:true, index:6},
+                        {value:' ', matched:false, index:9},
+                        {value:'words', matched:true, index:10},
+                    ],
+                    ['these', ' ', 'are', ' ', 'words'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern), results[2]);
+                });
             });
 
             it('should correctly handle alternation in a regex pattern', () => {
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('a12bc z', '[0-9]+|[a-z]+'), {0:'a', 1:'12', 3:'bc', 6:'z'});
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('a12bc z', '[0-9]+|[a-z]+'), [
-                    {value:'a', matched:true, index:0},
-                    {value:'12', matched:true, index:1},
-                    {value:'bc', matched:true, index:3},
-                    {value:' ', matched:false, index:5},
-                    {value:'z', matched:true, index:6},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('a12bc z', '[0-9]+|[a-z]+'), [
-                    'a', '12', 'bc', ' ', 'z',
-                ]);
+                const str = 'a12bc z', pattern = '[0-9]+|[a-z]+', results = [
+                    {0:'a', 1:'12', 3:'bc', 6:'z'},
+                    [
+                        {value:'a', matched:true, index:0},
+                        {value:'12', matched:true, index:1},
+                        {value:'bc', matched:true, index:3},
+                        {value:' ', matched:false, index:5},
+                        {value:'z', matched:true, index:6},
+                    ],
+                    ['a', '12', 'bc', ' ', 'z'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern), results[2]);
+                });
             });
 
             it('should correctly handle a regex pattern containing capturing groups', () => {
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('ab', '(a|b)'), {0:'a', 1:'b'});
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('ab', '(a|b)'), [
-                    {value:'a', matched:true, index:0},
-                    {value:'b', matched:true, index:1},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('ab', '(a|b)'), [
-                    'a', 'b',
-                ]);
+                let str = undefined, pattern = undefined, results = undefined;
 
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('ab', '(a)|(b)'), {0:'a', 1:'b'});
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('ab', '(a)|(b)'), [
-                    {value:'a', matched:true, index:0},
-                    {value:'b', matched:true, index:1},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('ab', '(a|b)'), [
-                    'a', 'b',
-                ]);
+                str = 'ab'; pattern = '(a|b)'; results = [
+                    {0:'a', 1:'b'},
+                    [
+                        {value:'a', matched:true, index:0},
+                        {value:'b', matched:true, index:1},
+                    ],
+                    ['a', 'b'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern), results[2]);
+                });
+
+                str = 'ab'; pattern = '(a)|(b)'; results = [
+                    {0:'a', 1:'b'},
+                    [
+                        {value:'a', matched:true, index:0},
+                        {value:'b', matched:true, index:1},
+                    ],
+                    ['a', 'b'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern), results[2]);
+                });
             });
 
             it('should handle case sensitivity correctly', () => {
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('abABc', '[a-z]', false), {0:'a', 1:'b', 4:'c'});
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('abABc', '[a-z]', false), [
-                    {value:'a', matched:true, index:0},
-                    {value:'b', matched:true, index:1},
-                    {value:'A', matched:false, index:2},
-                    {value:'B', matched:false, index:3},
-                    {value:'c', matched:true, index:4},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('abABc', '[a-z]', false), [
-                    'a', 'b', 'A', 'B', 'c',
-                ]);
+                let str = undefined, pattern = undefined, results = undefined;
 
-                assert.deepStrictEqual(JsuCmn.matchAllAndIndex('abABc', '[a-z]', true), {0:'a', 1:'b', 2:'A', 3:'B', 4:'c'});
-                assert.deepStrictEqual(JsuCmn.isolateMatchingData('abABc', '[a-z]', true), [
-                    {value:'a', matched:true, index:0},
-                    {value:'b', matched:true, index:1},
-                    {value:'A', matched:true, index:2},
-                    {value:'B', matched:true, index:3},
-                    {value:'c', matched:true, index:4},
-                ]);
-                assert.deepStrictEqual(JsuCmn.isolateMatchingValues('abABc', '[a-z]', true), [
-                    'a', 'b', 'A', 'B', 'c',
-                ]);
+                str = 'abABc'; pattern = '[a-z]'; results = [
+                    {0:'a', 1:'b', 4:'c'},
+                    [
+                        {value:'a', matched:true, index:0},
+                        {value:'b', matched:true, index:1},
+                        {value:'A', matched:false, index:2},
+                        {value:'B', matched:false, index:3},
+                        {value:'c', matched:true, index:4},
+                    ],
+                    ['a', 'b', 'A', 'B', 'c'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern, false), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern, false), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern, false), results[2]);
+                });
+
+                str = 'abABc'; pattern = '[a-z]'; results = [
+                    {0:'a', 1:'b', 2:'A', 3:'B', 4:'c'},
+                    [
+                        {value:'a', matched:true, index:0},
+                        {value:'b', matched:true, index:1},
+                        {value:'A', matched:true, index:2},
+                        {value:'B', matched:true, index:3},
+                        {value:'c', matched:true, index:4},
+                    ],
+                    ['a', 'b', 'A', 'B', 'c'],
+                ];
+                [str, new String(str)].forEach(function(val) {
+                    assert.deepStrictEqual(JsuCmn.matchAllAndIndex(val, pattern, true), results[0]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingData(val, pattern, true), results[1]);
+                    assert.deepStrictEqual(JsuCmn.isolateMatchingValues(val, pattern, true), results[2]);
+                });
             });
         });
     })();

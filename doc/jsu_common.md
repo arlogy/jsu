@@ -84,8 +84,8 @@ are not an option.*
 Toggles the visibility of an HTML element.
 - `elt`: the HTML element whose visibility is to be toggled; could be the result
 of `document.getElementById()` for example.
-- `dsp`: optional display style; see `JsuCmn.setEltVisible()`; this function
-actually does `JsuCmn.setEltVisible(elt, !JsuCmn.isEltVisible(elt), dsp)`.
+- `dsp`: optional display style; see `JsuCmn.setEltVisible()` because this
+function actually does `JsuCmn.setEltVisible(elt, !JsuCmn.isEltVisible(elt), dsp)`.
 
 ## JsuCmn.isBoolean(value)
 

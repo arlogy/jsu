@@ -114,7 +114,7 @@ function() {
         return str.replace(/{(\w+)}/g, function(match, c) { // c is the value captured in the match
             return c in fmt ? fmt[c] : match;
         });
-    }
+    };
 
     API.setStringPrototypeFormat = function() {
         if(String.prototype.format === undefined) {
