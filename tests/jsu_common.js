@@ -272,14 +272,15 @@ afterEach(() => {
     (function() {
         describe('formatString()', () => {
             it('should correctly format a string', () => {
-                [
+                const testData = [
                   //[param1,                          param2,          expectedResult]
                     ['{0}',                           ['zero'],        'zero'],
                     ['{1}',                           ['zero', 'one'], 'one'],
                     ['{1}',                           ['one'],         '{1}'],
                     ['{0} {1} {0}',                   ['{1}', 'one'],  '{1} one {1}'],
                     ['x={x} y={?} z={z} x^2={x}*{x}', {x:0, y:1},      'x=0 y={?} z={z} x^2=0*0'],
-                ].forEach(function(arr) {
+                ];
+                testData.forEach(function(arr) {
                     assert.strictEqual(JsuCmn.formatString(arr[0], arr[1]), arr[2]);
                     assert.strictEqual(JsuCmn.formatString(new String(arr[0]), arr[1]), arr[2]);
                 });
@@ -565,10 +566,10 @@ afterEach(() => {
         describe('cloneDeep()', () => {
             const clnd = JsuCmn.cloneDeep;
 
-            // helps create objects that contain more than one reference to a given object
+            // helps to create clones having more than one reference to the clone of a given object
             const cloneRefs = (obj) => [
                 clnd([obj, obj]),
-                Object.entries(clnd({a:obj, b:obj})).map(x => x[1]),
+                Object.entries(clnd({a:obj, b:obj})).map(x => x[1]), // we use Object.entries(...).map(...) to create an array from an object
             ];
 
             it('should correctly clone undefined and null', () => {
@@ -703,7 +704,7 @@ afterEach(() => {
                         enumerable: false,
                     });
                 }
-                Rectangle.prototype.area = function() { return this.height * this.width; };
+                Rectangle.prototype.area = function() { return this.width * this.height; };
                 const source = new Rectangle(1920, 1080);
                 const target = clnd(source);
                 assert.strictEqual(target !== source, true);

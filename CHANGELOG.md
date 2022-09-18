@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+- Add LaTeX features: `const JsuLtx = Jsu.Latex;` (see documentation).
+
 ## 1.2.0 - 2022/09/02
 
 - Add `JsuCmn.cloneDeep(value)` for convenient deep cloning.
