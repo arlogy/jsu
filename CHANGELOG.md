@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## 1.3.0 - 2022/09/18
 
 - Add LaTeX features: `const JsuLtx = Jsu.Latex;` (see documentation).
 
