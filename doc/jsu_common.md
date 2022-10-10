@@ -29,7 +29,7 @@
     - [isolateMatchingData()](#jsucmnisolatematchingdatastr-pattern-ignorecase)
     - [isolateMatchingValues()](#jsucmnisolatematchingvaluesstr-pattern-ignorecase)
 - Others
-    - [cloneDeep()](#jsucmnclonedeepvalue)
+    - [cloneDeep()](#jsucmnclonedeepvalue-cache-clonecustomimpl)
 
 ## JsuCmn.setLocalStorageItem(key, value)
 
@@ -329,60 +329,152 @@ values of the matches).
 })();
 ```
 
-## JsuCmn.cloneDeep(value)
+## JsuCmn.cloneDeep(value, cache, cloneCustomImpl)
 
-A limited, simple but useful deep clone implementation. Clones a value
-recursively and handles circular references correctly.
+Clones a value recursively and handles circular references correctly. Can be
+extended to clone custom values in a specific way.
+
+### Default implementation
+
 - If `typeof value` is `'undefined'`, `'boolean'`, `'number'`, `'bigint'`,
 `'string'` or `'function'`: returns `value`.
-- If `typeof value` is `'symbol'`: returns `Symbol(value.description)`; see (1)
-below.
-- Otherwise (i.e. `typeof value` is `'object'`)
-    - If `value` is `null`: returns it.
+- If `typeof value` is `'symbol'`: returns `Symbol(value.description)`; see
+*caching* below.
+- Otherwise, i.e. if `typeof value` is `'object'`.
+    - If `value` is `null`: returns `value`.
     - If `value instanceof X` where `X` is one of `Boolean`, `Date`, `Number` or
-    `String`: returns `new X(value.valueOf())`; see (1) below.
-    - If `Array.isArray(value)`: returns a new array `[...]` whose elements are
-    deep clones of those in `value`; see (1) below.
-    - Otherwise: `value` is treated as an object literal `{...}` (this is a
-    deliberate limitation for simplicity), and its properties are deep cloned
-    according to `Object.keys()`, i.e. inherited and non-enumerable properties
-    are ignored; the returned value is an object literal; see (1) below.
+    `String`: returns `new X(value.valueOf())`; see *caching* below.
+    - If `value` is an array: returns a new array `[...]` whose elements are
+    deep clones of those in `value`; see *caching* below.
+    - If `cloneCustomImpl` is truthy and `const copy = cloneCustomImpl(value, cache);`
+    is not `undefined`: returns `copy`; note that the function will not be
+    called if a copy already exists in the cache for `value`; see the section on
+    extending the default cloning algorithm for more information on `cache` and
+    `cloneCustomImpl`.
+    - Otherwise (fallback behavior): `value` is deep cloned considering only the
+    properties returned by `Object.keys(value)` (this is a deliberate limitation
+    for simplicity), i.e. inherited and non-enumerable properties are ignored;
+    the returned value is an object literal `{...}`; see *caching* below.
 
-(1) the returned value is cached and will be returned when the same reference to
-`value` is cloned again
+Caching: the returned value is cached and will be returned when the same
+reference to `value` is cloned again.
 
 ```javascript
 // Example
 (function() {
     const node = {x:0, y:0}; node.self = node; node.children = [{parent:node}, {parent:node}];
-    const clone = JsuCmn.cloneDeep(node); clone.x = 10;
+    const clone = JsuCmn.cloneDeep(node); clone.y = 10;
     console.log(clone);
     console.log(
-        clone === node, // false
-        clone.self === clone, // true
-        clone.children.every(x => x.parent === clone) // true
+        // object references are different
+        clone !== node, // true
+        // values are the same unless changed for the cloned version
+        clone.x === node.x && clone.y !== node.y, // true
+        // object references are cached accordingly
+        clone.self === clone && node.self === node, // true
+        clone.children.every(x => x.parent === clone) && node.children.every(x => x.parent === node) // true
     );
 })();
 ```
 
-This function can be used to safely extend the jsu library. 
+### Extending the default implementation
+
+`cache` is optional and defaults to an internal object value. It applies from
+the first call to `JsuCmn.cloneDeep()` including the internal properties of the
+value to clone if it has any.
+
+`cloneCustomImpl` is optional and the most important parameter when creating
+custom clones.
+
+Learn more about custom cloning with the example below.
 
 ```javascript
 // Example
 (function() {
-    const MyCmn = JsuCmn.cloneDeep(JsuCmn);
-    MyCmn.anyFunctionOfMyChoice = function() { console.log('anyFunctionOfMyChoice' in JsuCmn); };
-    MyCmn.anyFunctionOfMyChoice();
+    const cloneDeep = JsuCmn.cloneDeep;
+    function Person(firstName, lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+    Person.prototype.fullName = function() { return this.firstName + ' ' + this.lastName; };
+    let obj = new Person('fname', 'lname');
+    obj = {a:obj, b:obj};
+
+    console.log('--- ignore custom cloning');
+    (function() {
+        console.log(cloneDeep(obj)); // no custom cloning
+        console.log(cloneDeep(obj, undefined, (value, cache) => {
+            return undefined; // skip custom cloning
+        }));
+    })();
+
+    console.log('--- learn custom cloning');
+    (function() {
+        let i = undefined;
+        i = 0;
+        console.log(cloneDeep(obj, undefined, (value, cache) => {
+            return ++i;
+        }));
+        i = 0;
+        console.log(cloneDeep(obj, undefined, (value, cache) => {
+            if(value instanceof Person) return ++i;
+            return undefined; // skip custom cloning
+        }));
+        i = 0;
+        console.log(cloneDeep(obj, undefined, (value, cache) => {
+            if(value instanceof Person) {
+                // this example shows how to use the cache:
+                //     - always check cache.get() before using cache.add();
+                //       this is to avoid duplicate keys in cache
+                //     - when a value is cached, the entry in the cache will be
+                //       used instead of trying the custom cloning function
+                const copy = cache.get(value); // will be undefined if no entry exists in the cache for the given key
+                                               // thus, a key must not be mapped to undefined
+                return copy !== undefined ? copy : cache.add(value, ++i);
+            }
+            return undefined; // skip custom cloning
+        }));
+    })();
+
+    console.log('--- implement custom cloning');
+    (function() {
+        console.log(cloneDeep(obj, undefined, (value, cache) => {
+            if(value instanceof Person) {
+                const copy = cache.get(value);
+                return copy !== undefined ? copy : cache.add(value, new Person(value.firstName, value.lastName));
+            }
+            return undefined; // skip custom cloning
+        }));
+    })();
+
+    console.log('--- handle recursion during custom cloning');
+    (function() {
+        const cloneCustomImpl = (value, cache) => { // implemented for explanatory purposes only
+            const copy = {};
+            cache.add(value, copy); // cache data before the recursive cloneDeep() calls below
+            for(const prop in value) { // a possible way to loop over properties...
+                copy[prop] = cloneDeep(value[prop], cache, cloneCustomImpl);
+            }
+            return copy;
+        };
+        const tmp1 = {x:0}; tmp1.self1 = tmp1.self2 = tmp1.self3 = tmp1;
+        const tmp2 = cloneDeep(tmp1, undefined, cloneCustomImpl);
+        console.log(tmp2);
+        console.log(tmp2 === tmp2.self1 && tmp2.self1 === tmp2.self2 && tmp2.self2 === tmp2.self3); // true
+    })();
 })();
 ```
 
-In Node.js environments however, you might want to use the lodash [`cloneDeep()`](https://lodash.com/docs/#cloneDeep)
-function which supports many other types of value.
+### Other deep cloning implementations
+
+In Node.js environments, you can use the lodash [`cloneDeep()`](https://lodash.com/docs/#cloneDeep)
+function for example, which supports more data types compared to the default
+implementation of `JsuCmn.cloneDeep()`.
 
 ```javascript
-// Example
+// Example after `npm install lodash`
 (function() {
-    const {cloneDeep} = require('lodash'); // after `npm install lodash`
+    const {cloneDeep} = require('lodash');
     const node = {x:0}; node.prev = node; node.next = node; node.self = node;
     console.log(cloneDeep(node));
 })();

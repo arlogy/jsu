@@ -1,5 +1,10 @@
 # Changelog
 
+## Next version
+
+- Update `JsuCmn.cloneDeep(value)` to `JsuCmn.cloneDeep(value, cache, cloneCustomImpl)`.
+The new parameters of the function are optional.
+
 ## 1.3.0 - 2022/09/18
 
 - Add LaTeX features under `const JsuLtx = Jsu.Latex;`.
