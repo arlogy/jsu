@@ -2,7 +2,7 @@
 
 ## 1.3.0 - 2022/09/18
 
-- Add LaTeX features: `const JsuLtx = Jsu.Latex;` (see documentation).
+- Add LaTeX features under `const JsuLtx = Jsu.Latex;`.
 
 ## 1.2.0 - 2022/09/02
 
