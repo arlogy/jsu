@@ -43,7 +43,7 @@ function() {
     //     for example when cookies are blocked. So access to the storage must
     //     be wrapped in a try-catch block.
 
-    // --- UI ---
+    // --- CSS Visibility ---
 
     API.setEltVisible = function(elt, vis, dsp) {
         elt.style.display = vis ? (dsp && dsp !== 'none' ? dsp : 'revert')

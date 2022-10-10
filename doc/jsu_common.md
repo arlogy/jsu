@@ -3,7 +3,7 @@
 - Local Storage
     - [setLocalStorageItem()](#jsucmnsetlocalstorageitemkey-value)
     - [getLocalStorageItem()](#jsucmngetlocalstorageitemkey)
-- UI
+- CSS Visibility
     - [setEltVisible()](#jsucmnseteltvisibleelt-vis-dsp)
     - [isEltVisible()](#jsucmniseltvisibleelt)
     - [switchEltVisibility()](#jsucmnswitcheltvisibilityelt-dsp)
