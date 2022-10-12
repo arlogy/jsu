@@ -377,11 +377,57 @@ reference to `value` is cloned again.
 })();
 ```
 
+Note that this function is not intended to clone the `get`/`set` accessor
+properties of an object; see why below if you are interested.
+
+```javascript
+// Reason 1: finding accessor properties is currently not possible for classes
+(function() {
+    const obj1 = { get xx() { return 'xx getter called'; } };
+    console.log(obj1.xx);
+    console.log(Object.getOwnPropertyDescriptor(obj1, 'xx')); // property descriptor found
+
+    const Clazz = class { get xx() { return 'xx getter called'; } };
+    const obj2 = new Clazz();
+    console.log(obj2.xx);
+    console.log(Object.getOwnPropertyDescriptor(obj2, 'xx')); // property descriptor not found
+})();
+
+console.log('---');
+
+// Reason 2: Setting an accessor property for a clone of an object MAY change
+// the value of the property on the original object
+(function() {
+    const obj1 = (function() {
+        let xx = 0;
+        return {
+            get xx() { return xx; }, set xx(v) { xx = v; }, // accessor property
+            yy:undefined, // data property
+        };
+    })();
+    const obj2 = (function() { // create a clone of obj1 considering property descriptors if any
+        const retVal = {};
+        // use a copy of the descriptor of accessor properties
+        Object.defineProperty(retVal, 'xx', Object.getOwnPropertyDescriptor(obj1, 'xx'));
+        // use the value of data properties
+        retVal.yy = obj1.yy; // note that a generic cloning algorithm should deep clone obj1.yy
+                             // instead of using its value which is undefined here
+        return retVal;
+    })();
+    console.log(obj1);
+    console.log(obj2);
+    obj1.xx = obj1.yy = 1; // 'xx' will also change for obj2 because the property
+                           // is bound to a local variable in the function that created obj1
+    console.log(obj1);
+    console.log(obj2);
+})();
+```
+
 ### Extending the default implementation
 
 `cache` is optional and defaults to an internal object value. It applies from
-the first call to `JsuCmn.cloneDeep()` including the internal properties of the
-value to clone if it has any.
+the first call to `JsuCmn.cloneDeep()` to recursive calls if there are any, as
+for an array for example.
 
 `cloneCustomImpl` is optional and the most important parameter when creating
 custom clones.
@@ -398,7 +444,7 @@ Learn more about custom cloning with the example below.
     }
     Person.prototype.fullName = function() { return this.firstName + ' ' + this.lastName; };
     let obj = new Person('fname', 'lname');
-    obj = {a:obj, b:obj};
+    obj = {a:obj, b:obj}; // has several references to obj for explanatory purposes
 
     console.log('--- ignore custom cloning');
     (function() {
@@ -422,14 +468,16 @@ Learn more about custom cloning with the example below.
         }));
         i = 0;
         console.log(cloneDeep(obj, undefined, (value, cache) => {
+            // this example shows how to use the cache:
+            //     - cache.add(key, value) maps a key to a value in the cache
+            //     - cache.get(key) returns the value corresponding to a key in the cache, or undefined otherwise;
+            //       thus, a key must not be mapped to undefined;
+            //       cache.get() must also be checked before using cache.add() to avoid duplicate keys in the cache
+            //     - when a value is cached, the entry in the cache will be used, and this function will not be called
             if(value instanceof Person) {
-                // this example shows how to use the cache:
-                //     - always check cache.get() before using cache.add();
-                //       this is to avoid duplicate keys in cache
-                //     - when a value is cached, the entry in the cache will be
-                //       used instead of trying the custom cloning function
-                const copy = cache.get(value); // will be undefined if no entry exists in the cache for the given key
-                                               // thus, a key must not be mapped to undefined
+                console.log('custom cloning once due to caching...');
+                // return an already cached copy or a newly cached copy
+                const copy = cache.get(value);
                 return copy !== undefined ? copy : cache.add(value, ++i);
             }
             return undefined; // skip custom cloning
@@ -452,7 +500,7 @@ Learn more about custom cloning with the example below.
         const cloneCustomImpl = (value, cache) => { // implemented for explanatory purposes only
             const copy = {};
             cache.add(value, copy); // cache data before the recursive cloneDeep() calls below
-            for(const prop in value) { // a possible way to loop over properties...
+            for(const prop in value) { // possible way to iterate over properties...
                 copy[prop] = cloneDeep(value[prop], cache, cloneCustomImpl);
             }
             return copy;
