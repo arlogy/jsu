@@ -268,8 +268,8 @@ function() {
                 return copy;
             }
 
-            default: // will not be reached but retained anyway
-                return value;
+            default: // invalid case because all possible values are already handled above
+                throw new RangeError('The typeof operator returned an unexpected value');
         }
     }
 
