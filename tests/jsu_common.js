@@ -580,10 +580,10 @@ afterEach(() => {
 
             const checkImpl = (val, checker) => {
                 // check implementation with several copies of val
-                const cloneCustomImplArr = [undefined, sinon.fake.returns(dummy())];
-                for(const cloneCustomImplVal of cloneCustomImplArr) {
-                    const copy = clnd(val, undefined, cloneCustomImplVal);
-                    checker(copy, cloneCustomImplVal);
+                const cloneCustomList = [undefined, sinon.fake.returns(dummy())];
+                for(const cloneCustomImpl of cloneCustomList) {
+                    const copy = clnd(val, undefined, cloneCustomImpl);
+                    checker(copy, cloneCustomImpl);
                 }
                 // check data caching for val
                 checkCaching(val);
@@ -706,9 +706,8 @@ afterEach(() => {
                 });
             });
 
-            it('should correctly clone an array', () => {
-                const arrays = [[], ...implParams.map(x => [x])];
-                arrays.forEach(function(arr) {
+            it('should correctly clone an array (case 1: clone and original share the same structure)', () => {
+                [[], [...implParams]].forEach(function(arr) {
                     checkImpl(arr, function(copy, cloneCustomImpl) {
                         assert.strictEqual(Array.isArray(copy), true);
                         (function() {
@@ -738,6 +737,16 @@ afterEach(() => {
                         assert.strictEqual(copy !== arr, true);
                     });
                 });
+            });
+
+            it('should correctly clone an array (case 2: cloning is as deep as necessary)', () => {
+                let arr = [dummy()];
+                for(let i = 1; i <= 100; i++) {
+                    const copy = clnd(arr);
+                    arr.push(arr, copy);
+                    arr = copy;
+                }
+                assert.deepStrictEqual(clnd(arr), arr);
             });
 
             it('should correctly clone other objects (case 1: an object literal having no circular references)', () => {
@@ -793,17 +802,28 @@ afterEach(() => {
                 });
             });
 
-            it('should correctly handle other aspects of cloneCustomImpl (case 1: its return value)', () => {
+            it('should correctly clone other objects (case 4: cloning is as deep as necessary)', () => {
+                let obj = {x:dummy()};
+                for(let i = 1; i <= 100; i++) {
+                    const copy = clnd(obj);
+                    obj.self1 = obj;
+                    obj.self2 = copy;
+                    obj = copy;
+                }
+                assert.deepStrictEqual(clnd(obj), obj);
+            });
+
+            it('should correctly handle the other aspects of cloneCustomImpl (case 1: it is ignored in favor of the default impl. if it returns undefined)', () => {
                 const obj = {x:dummy()};
                 implParams.forEach(function(customClone) {
                     const cloneCustomImpl = sinon.fake.returns(customClone);
                     assert.deepStrictEqual(clnd(obj, undefined, cloneCustomImpl), (function() {
-                        return customClone !== undefined ? customClone : clnd(obj);
+                        return customClone === undefined ? clnd(obj) : customClone;
                     })());
                 });
             });
 
-            it('should correctly handle other aspects of cloneCustomImpl (case 2: it is not called if the value to be cloned is already cached)', () => {
+            it('should correctly handle the other aspects of cloneCustomImpl (case 2: it is not called if the value to be cloned is already cached)', () => {
                 const propThreshold = 3;
                 const obj = (function() {
                     const retVal = {};
