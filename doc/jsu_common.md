@@ -377,11 +377,46 @@ reference to `value` is cloned again.
 })();
 ```
 
-Note that this function is not intended to clone the `get`/`set` accessor
+### Limitations of the default implementation (for accessor properties)
+
+Accessor properties are those defined using the `get`/`set` syntax. First, let's
+see how they are cloned.
+
+```javascript
+// Example
+(function() {
+    const obj1 = {
+        _xx:0,
+        get xx() { return this._xx; }, set xx(v) { this._xx = 2 * v; },
+    };
+    console.log(obj1, obj1.xx);
+    obj1.xx = 1;
+    console.log(obj1, obj1.xx);
+    console.log('---');
+
+    // cloning obj1 will not preserve its get/set behaviors; only the value
+    // returned by the getter is kept
+    const obj2 = JsuCmn.cloneDeep(obj1);
+    console.log(obj2, obj2.xx);
+    obj2.xx = 0; // no setter will be triggered...
+    console.log(obj2, obj2.xx);
+    console.log('---');
+
+    // of course, changes made to one object will not affect the other
+    obj1.xx = 10;
+    console.log(obj2, obj2.xx);
+    obj2.xx = -10;
+    console.log(obj1, obj1.xx);
+})();
+```
+
+Note that this function is not intended to preserve the behavior of the accessor
 properties of an object; see why below if you are interested.
 
 ```javascript
-// Reason 1: finding accessor properties is currently not possible for classes
+// Reason 1: the accessor properties of an object which is an instance of a
+// class are not on the object itself but on its prototype, and this also
+// requires checking whether the object is a class instance or not
 (function() {
     const obj1 = { get xx() { return 'xx getter called'; } };
     console.log(obj1.xx);
@@ -390,13 +425,16 @@ properties of an object; see why below if you are interested.
     const Clazz = class { get xx() { return 'xx getter called'; } };
     const obj2 = new Clazz();
     console.log(obj2.xx);
-    console.log(Object.getOwnPropertyDescriptor(obj2, 'xx')); // property descriptor not found
+    console.log(Object.getOwnPropertyDescriptor(obj2, 'xx')); // property descriptor NOT found
+    const obj2P = Object.getPrototypeOf(obj2);
+    console.log(Object.getOwnPropertyDescriptor(obj2P, 'xx')); // property descriptor NOW found, but it is
+                                                               // on the prototype, not on the object itself
 })();
 
 console.log('---');
 
-// Reason 2: Setting an accessor property for a clone of an object MAY change
-// the value of the property on the original object
+// Reason 2 (stronger than reason 1): setting an accessor property on a clone
+// of an object MAY change the value of the property on the original object
 (function() {
     const obj1 = (function() {
         let xx = 0;
@@ -405,23 +443,29 @@ console.log('---');
             yy:undefined, // data property
         };
     })();
-    const obj2 = (function() { // create a clone of obj1 considering property descriptors if any
+
+    // create a clone of obj1, including property descriptors if any
+    const obj2 = (function() {
         const retVal = {};
         // use a copy of the descriptor of accessor properties
         Object.defineProperty(retVal, 'xx', Object.getOwnPropertyDescriptor(obj1, 'xx'));
         // use the value of data properties
         retVal.yy = obj1.yy; // note that a generic cloning algorithm should deep clone obj1.yy
-                             // instead of using its value which is undefined here
+                             // instead of using its value, but that's not necessary here
         return retVal;
     })();
-    console.log(obj1);
-    console.log(obj2);
-    obj1.xx = obj1.yy = 1; // 'xx' will also change for obj2 because the property
-                           // is bound to a local variable in the function that created obj1
-    console.log(obj1);
-    console.log(obj2);
+
+    console.log(obj1, obj1.xx, obj1.yy);
+    console.log(obj2, obj2.xx, obj2.yy);
+    obj2.xx = obj2.yy = 1; // 'xx' will also change for obj1 because the property is bound to
+                           // a local variable in the function that created obj1
+    console.log(obj1, obj1.xx, obj1.yy);
+    console.log(obj2, obj2.xx, obj2.yy);
 })();
 ```
+
+So if the accessor properties of an object should be cloned, the default deep
+cloning implementation can be extended accordingly.
 
 ### Extending the default implementation
 
