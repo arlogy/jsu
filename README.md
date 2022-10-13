@@ -33,6 +33,11 @@ git clone <project_git_uri>
 cd <project_dir>/
 npm install
 npm run test # run all tests
+    # each test file can be run standalone and will not share memory (the global
+    # object for example) with other test files; this explains the multiple
+    # entries of the `scripts` object in `package.json`, instead of a single
+    # entry as follows for example:
+    #     `"test": "echo Running tests... && mocha ./tests/_index.js ./tests/jsu*.js && echo Finished!"`
 ```
 
 We use the following Node.js packages which were all installed using `npm install <package> --save-dev`.
