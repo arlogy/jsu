@@ -94,8 +94,9 @@ afterEach(() => {
     (function() {
         describe('getSafetyPadding()', () => {
             it('should return a non-empty primitive string', () => {
-                assert.strictEqual(typeof JsuLtx.getSafetyPadding(), 'string');
-                assert.strictEqual(JsuLtx.getSafetyPadding().length !== 0, true);
+                const safetyPadding = JsuLtx.getSafetyPadding();
+                assert.strictEqual(typeof safetyPadding, 'string');
+                assert.strictEqual(safetyPadding.length !== 0, true);
             });
             it('should not introduce a LaTeX shortcut if added before and/or after a substring of a LaTeX shortcut', () => {
                 const padding = JsuLtx.getSafetyPadding();
@@ -170,18 +171,23 @@ afterEach(() => {
 
     (function() {
         describe('convertLatexShortcuts()', () => {
-            // rules from the properties of JsuLtx.getLatexShortcutData() are duplicated here for readability
             const greekLetterNames = JsuLtx.getGreekLetterNames();
-            const subscriptDigits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const latexShortcutData = JsuLtx.getLatexShortcutData();
+            const subscriptDigits = latexShortcutData.subscript.pattern.list.map(x => parseInt(x[1], 10));
+            assert.deepStrictEqual(subscriptDigits, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); // just for understanding
             const checkData = (shortcut, conversion) => {
                 for(const str of [shortcut, new String(shortcut)]) {
                     const retVal = JsuLtx.convertLatexShortcuts(str);
                     assert.strictEqual(retVal, conversion);
                     assert.strictEqual(retVal.length, JsuLtx.isolateLatexShortcutData(str).length); // see (1) below
-                    // (1) satisfy the equality stated in the documentation of JsuLtx.isolateLatexShortcutData()
-                    //     (and assumed in the documentation of JsuLtx.insertString() for example)
+                    // (1) check that the values returned by JsuLtx.convertLatexShortcuts() and
+                    //     JsuLtx.isolateLatexShortcutData() have the same length, which is stated
+                    //     in the documentation of JsuLtx.isolateLatexShortcutData() (and assumed in
+                    //     the documentation and implementation of JsuLtx.insertString() for example)
                 }
             };
+            // rules from the properties of JsuLtx.getLatexShortcutData() are duplicated below for readability
+            //     using \ and _ instead of the corresponding property names for example
             it('should correctly convert one shortcut at a time', () => {
                 for(let i = 0; i < greekLetterNames.length; i++) {
                     const name = greekLetterNames[i];
