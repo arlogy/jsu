@@ -336,28 +336,41 @@ extended to clone custom values in a specific way.
 
 ### Default implementation
 
+Notations (for better readability only)
+- Here, `x` is compared using the strict equality operator (`===`).
+- `inCache(x)` returns whether a clone is already cached for `x`.
+- `getCache(x)` returns the clone of `x` in the cache; so `inCache(x)` must have
+returned `true` prior to calling this function.
+- `setCache(x, y)` caches `y` as a clone of `x` and returns `y`; so `inCache(x)`
+and `getCache(x)` will return `true` and `y` respectively after calling this
+function.
+
+Implementation
 - If `typeof value` is `'undefined'`, `'boolean'`, `'number'`, `'bigint'`,
 `'string'` or `'function'`: returns `value`.
-- If `typeof value` is `'symbol'`: returns `Symbol(value.description)`; see
-*caching* below.
+- If `typeof value` is `'symbol'`: returns `getCache(value)` if `inCache(value)`,
+`setCache(value, Symbol(value.description))` otherwise.
 - Otherwise, i.e. if `typeof value` is `'object'`.
     - If `value` is `null`: returns `value`.
+    - If `inCache(value)`: returns `getCache(value)`.
     - If `value instanceof X` where `X` is one of `Boolean`, `Date`, `Number` or
-    `String`: returns `new X(value.valueOf())`; see *caching* below.
-    - If `value` is an array: returns a new array `[...]` whose elements are
-    deep clones of those in `value`; see *caching* below.
-    - If `cloneCustomImpl` is truthy and `const copy = cloneCustomImpl(value, cache);`
-    is not `undefined`: returns `copy`; note that the function will not be
-    called if a copy already exists in the cache for `value`; see the section on
-    extending the default cloning algorithm for more information on `cache` and
-    `cloneCustomImpl`.
-    - Otherwise (fallback behavior): `value` is deep cloned considering only the
-    properties returned by `Object.keys(value)` (this is a deliberate limitation
-    for simplicity), i.e. inherited and non-enumerable properties are ignored;
-    the returned value is an object literal `{...}`; see *caching* below.
-
-Caching: the returned value is cached and will be returned when the same
-reference to `value` is cloned again.
+    `String`: returns `setCache(value, new X(value.valueOf()))`.
+    - If `value` is an array: returns `setCache(value, X)` where `X` is an array
+    `[...]` whose elements are deep clones of those in `value`; note that `X` is
+    cached before cloning the elements of `value` and will be reused when `value`
+    is referenced from its elements.
+    - If `cloneCustomImpl` is truthy (expected function) and `const copy = cloneCustomImpl(value, cache);`
+    is not `undefined`: returns `copy`; remember that the function will not be
+    checked at all if a clone already exists in the cache for `value`; see the
+    section on extending the default cloning algorithm for more information on
+    the `cache` and `cloneCustomImpl` parameters.
+    - Otherwise (fallback behavior): returns `setCache(value, X)` where `X` is
+    an object literal `{...}` whose entries (property/value pairs) are deep
+    clones of those in `value`; note that for simplicity only the properties
+    returned by `Object.keys(value)` are considered, i.e. inherited and
+    non-enumerable properties are ignored; also, `X` is cached before cloning
+    the entries of `value` and will be reused when `value` is referenced from
+    its entries.
 
 ```javascript
 // Example
@@ -471,7 +484,7 @@ cloning implementation can be extended accordingly.
 
 `cache` is optional and defaults to an internal object value. It applies from
 the first call to `JsuCmn.cloneDeep()` to recursive calls if there are any, as
-for an array for example.
+for an array and its elements for example.
 
 `cloneCustomImpl` is optional and the most important parameter when creating
 custom clones.

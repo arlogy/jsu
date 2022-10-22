@@ -11,7 +11,7 @@ function requireScript(scriptId) {
         case 'event': return require('./src/jsu_event.js');
         case 'latex': return require('./src/jsu_latex.js');
     }
-    throw new RangeError('Unable to load script with ID "' + scriptId + '"')
+    throw new RangeError('Unable to load script with ID "' + scriptId + '"');
 }
 
 // expose the same interface as when using <script> tags to embed each script;

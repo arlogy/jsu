@@ -21,10 +21,8 @@ performing deep comparison of arbitrary objects.
 
 ## How-To
 
-Documentation and examples are available [here](doc).
-
-Version changelog is [here](CHANGELOG.md), with each version corresponding to a
-[tag](https://github.com/arlogy/jsu/tags).
+Documentation and examples are available [here](doc). Version changelog is
+[here](CHANGELOG.md).
 
 ## Tests
 
