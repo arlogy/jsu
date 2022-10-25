@@ -1,9 +1,12 @@
 # jsu
 
+*JavaScript utility library for ECMAScript 5.1 (or higher, due to backwards
+compatibility). See the list of browsers supporting ES5 [here](https://caniuse.com/es5).*
+
 jsu (read JSU) stands for and provides JavaScript Utilities. It targets older
 browser versions first unless there is a security risk, missing functionality
-or poor performance in newer browsers. Support for Internet Explorer is not an
-option as Microsoft Edge is its successor.
+or poor performance in newer browsers. Explicit support (dedicated code) is not
+planned for Internet Explorer as Microsoft Edge is its successor.
 
 The features provided by jsu were originally part of the [nvc](https://github.com/arlogy/nvc)
 project. Some of these features, such as type checking or timer events can be
@@ -24,21 +27,34 @@ performing deep comparison of arbitrary objects.
 Documentation and examples are available [here](doc). Version changelog is
 [here](CHANGELOG.md).
 
-## Tests
+## CLI and Automation
+
+### Testing
 
 ```bash
 git clone <project_git_uri>
 cd <project_dir>/
 npm install
 npm run test # run all tests
-    # each test file can be run standalone and will not share memory (the global
+    # each test file can be run standalone and will not share memory (the `global`
     # object for example) with other test files; this explains the multiple
     # entries of the `scripts` object in `package.json`, instead of a single
     # entry as follows for example:
     #     `"test": "echo Running tests... && mocha ./tests/_index.js ./tests/jsu*.js && echo Finished!"`
+    #         if the tests are not run via npm, replace mocha with ./node_modules/mocha/bin/mocha.js
+    #         in the above command to explicitly use the version of mocha
+    #         installed for this project
 ```
 
 We use the following Node.js packages which were all installed using `npm install <package> --save-dev`.
 - mocha for unit testing.
 - sinon for spies, stubs and mocks.
 - jsdom to imitate in a Node.js environment the behavior of a browser.
+
+### More
+
+Once the packages needed for testing are installed, `npm run check` should be
+preferred instead, in order to do the following.
+1. Check that the correct version of ECMAScript is targeted. jshint is used for
+this and run with the implicit linting options defined in `.jshintrc`.
+2. Run tests.

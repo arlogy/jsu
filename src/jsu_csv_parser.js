@@ -86,11 +86,10 @@ function() {
         // set the properties of this parser
 
         var stdLineSeps = ['\r', '\n', '\r\n']; // standard line separators (aka line breaks)
-        smartRegex = smartRegex
-                  && fieldDels.every(function(val) { return val.length === 1; })
-                  && fieldSeps.every(function(val) { return val.length === 1; })
-                  && lineSeps.every(function(val) { return stdLineSeps.indexOf(val) !== -1; })
-        ;
+        smartRegex = smartRegex &&
+                     fieldDels.every(function(val) { return val.length === 1; }) &&
+                     fieldSeps.every(function(val) { return val.length === 1; }) &&
+                     lineSeps.every(function(val) { return stdLineSeps.indexOf(val) !== -1; });
 
         var regexPatterns = [];
         if(smartRegex) {
@@ -279,7 +278,7 @@ function() {
 
         if(!skipLine) {
             this._records.push(this._currLineFields);
-            this._warnings.push(...this._currLineWarnings); // push each warning
+            Array.prototype.push.apply(this._warnings, this._currLineWarnings); // push each warning
         }
         this._currLineStr = '';
         this._currLineFields = [];

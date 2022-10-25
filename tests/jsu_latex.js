@@ -54,7 +54,7 @@ afterEach(() => {
                     let greekPatterns = greekLetterNames.map(function(name) {
                         return ['\\\\' + name, '\\\\' + name.toLowerCase()];
                     });
-                    greekPatterns = [].concat(...greekPatterns); // flatten array
+                    greekPatterns = greekPatterns.flat();
                     return {
                         'greekLetter': {
                             'pattern': {
@@ -377,9 +377,9 @@ afterEach(() => {
                     return patterns.join('|');
                 };
                 const str = dummy();
-                for(const patterns of [undefined, null, [], [dummy()]]) {
+                for(const patterns of [undefined, null, [], [dummy()], [dummy(), dummy()]]) {
                     const rewriteLatexCommands = sinon.stub(JsuLtx, 'rewriteLatexCommands').returns(dummy());
-                    const initialPatterns = Array.isArray(patterns) ? patterns.slice(0) : patterns;
+                    const initialPatterns = JsuCmn.cloneDeep(patterns);
                     const retVal = JsuLtx.rewriteKnownLatexCommands(str, patterns);
                     assert.deepStrictEqual(patterns, initialPatterns); // patterns is unchanged
                     assert.strictEqual(rewriteLatexCommands.calledOnceWithExactly(str, joinAll(patterns)), true);

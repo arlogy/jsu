@@ -9,7 +9,8 @@
     "src/"
   ],
   "scripts": {
-    "test": "echo Running tests... && npm run test:_index -s && npm run test:common -s && npm run test:csv_parser -s && npm run test:event -s && npm run test:latex -s && echo Finished!",
+    "check": "bash ./check.sh",
+    "test": "echo Running tests... && npm run test:_index -s && npm run test:common -s && npm run test:csv_parser -s && npm run test:event -s && npm run test:latex -s && echo Finished testing!",
     "test:_index": "mocha ./tests/_index.js",
     "test:common": "mocha ./tests/jsu_common.js",
     "test:csv_parser": "mocha ./tests/jsu_csv_parser.js",
@@ -21,6 +22,11 @@
     "url": "https://github.com/arlogy/jsu.git"
   },
   "keywords": [
+    "ecmascript",
+    "es2009",
+    "es2011",
+    "es5",
+    "es5.1",
     "javascript",
     "js",
     "utility",
@@ -37,6 +43,7 @@
   "homepage": "https://github.com/arlogy/jsu#readme",
   "devDependencies": {
     "jsdom": "^20.0.0",
+    "jshint": "^2.13.5",
     "mocha": "^10.0.0",
     "sinon": "^14.0.0"
   }

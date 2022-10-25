@@ -223,30 +223,30 @@ function() {
                 return value;
 
             case 'symbol': {
-                var copy = cache.get(value);
-                return copy !== undefined ? copy : cache.add(value, Symbol(value.description));
+                var copy1 = cache.get(value);
+                return copy1 !== undefined ? copy1 : cache.add(value, Symbol(value.description));
             }
 
             case 'object': {
                 if(value === null) return value;
 
-                var copy = cache.get(value);
-                if(copy !== undefined) return copy;
+                var copy2 = cache.get(value);
+                if(copy2 !== undefined) return copy2;
                 if(value instanceof Boolean) return cache.add(value, new Boolean(value.valueOf()));
                 if(value instanceof Date) return cache.add(value, new Date(value.valueOf()));
                 if(value instanceof Number) return cache.add(value, new Number(value.valueOf()));
                 if(value instanceof String) return cache.add(value, new String(value.valueOf()));
 
-                var i = undefined;
+                var i = -1;
                 if(_isArray(value)) {
-                    copy = [];
-                    cache.add(value, copy); // cache data before the recursive _cloneDeep() calls below
+                    copy2 = [];
+                    cache.add(value, copy2); // cache data before the recursive _cloneDeep() calls below
                     var valueLen = value.length;
                     for(i = 0; i < valueLen; i++) {
-                        copy.push(_cloneDeep(value[i], cache, cloneCustomImpl));
+                        copy2.push(_cloneDeep(value[i], cache, cloneCustomImpl));
                     }
                 }
-                else if(cloneCustomImpl && ((copy = cloneCustomImpl(value, cache)) !== undefined)) {
+                else if(cloneCustomImpl && ((copy2 = cloneCustomImpl(value, cache)) !== undefined)) {
                     // nothing to do because value is already cloned
                 }
                 else {
@@ -256,16 +256,16 @@ function() {
                     //     e.g. {x:3, y:{}, z:[null, {}, Symbol()]}
                     // all the JavaScript built-in objects that one might want to support can be found at
                     //     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
-                    copy = {};
-                    cache.add(value, copy); // cache data before the recursive _cloneDeep() calls below
+                    copy2 = {};
+                    cache.add(value, copy2); // cache data before the recursive _cloneDeep() calls below
                     var valueKeys = Object.keys(value);
                     var valueKeysLen = valueKeys.length;
                     for(i = 0; i < valueKeysLen; i++) {
                         var prop = valueKeys[i];
-                        copy[prop] = _cloneDeep(value[prop], cache, cloneCustomImpl);
+                        copy2[prop] = _cloneDeep(value[prop], cache, cloneCustomImpl);
                     }
                 }
-                return copy;
+                return copy2;
             }
 
             default: // invalid case because all possible values are already handled above
