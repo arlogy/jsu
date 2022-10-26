@@ -22,6 +22,8 @@
     "url": "https://github.com/arlogy/jsu.git"
   },
   "keywords": [
+    "client-side",
+    "server-side",
     "ecmascript",
     "es2009",
     "es2011",
