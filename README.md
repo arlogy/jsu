@@ -27,4 +27,4 @@ performing deep comparison of arbitrary objects.
 Documentation and examples are available [here](doc). Version changelog is
 [here](CHANGELOG.md).
 
-See this [file](DEVELOP.md) for development and maintenance notes.
+See [this file](DEVELOP.md) for development and maintenance notes.

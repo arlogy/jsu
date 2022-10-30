@@ -16,8 +16,7 @@ browserify_tests() {
     rm -f $dst_html
     read_from_to_files $dst_dir/index.template.part1.html $dst_html
     local fpath
-    for fpath in $src_dir/*.js;
-    do
+    for fpath in $src_dir/*.js; do
         local fname=$(basename $fpath)
         local cmd="npx browserify $fpath --outfile $dst_dir/$fname"
         echo "$cmd" && bash $cmd
@@ -35,8 +34,7 @@ validate_code() {
     # error messages, which is sufficient
     echo "Validating sources..."
     local cmd="npx jshint $ROOT/src"
-    if ! $cmd | tail -1 | grep -Fq "3 errors";
-    then
+    if ! $cmd | tail -1 | grep -Fq "3 errors"; then
         echo "Found unexpected jshint errors (too many or too few)"
         echo "Please run: $cmd"
         exit 1

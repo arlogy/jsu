@@ -3,10 +3,10 @@
 # Released under the MIT License (see LICENSE file)
 # Copyright (c) 2022 https://github.com/arlogy
 
-trap ctrl_c INT # trap Ctrl+C signal (SIGINT) to call ctrl_c()
+trap ctrl_c INT # intercept the Ctrl+C (SIGINT) signal to call ctrl_c()
                 # useful to safely quit while loops for example
 
-# Called after Ctrl+C signal is trapped.
+# Called after the Ctrl+C signal is trapped.
 ctrl_c() {
     echo "Trapped CTRL+C" && kill 0
 }
