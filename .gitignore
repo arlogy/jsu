@@ -1,6 +1,5 @@
 # Project-specific
-tests_browserified/*
-!tests_browserified/*template*
+tests_browserified
 
 # Logs
 logs

@@ -13,16 +13,16 @@ browserify_tests() {
     local src_dir=$ROOT/tests
     local dst_dir=$ROOT/tests_browserified
     local dst_html=$dst_dir/index.html
-    rm -f $dst_html
-    read_from_to_files $dst_dir/index.template.part1.html $dst_html
+    rm -rf $dst_dir && mkdir -p $dst_dir
+    read_from_to_files $src_dir/_browser.template.part1.html $dst_html
     local fpath
-    for fpath in $src_dir/*.js; do
+    for fpath in $src_dir/*.js; do # we consider all *.js files for simplicity
         local fname=$(basename $fpath)
         local cmd="npx browserify $fpath --outfile $dst_dir/$fname"
         echo "$cmd" && bash $cmd
         echo "        <script src=\"$dst_dir/$fname\"></script>" >> $dst_html
     done
-    read_from_to_files $dst_dir/index.template.part2.html $dst_html
+    read_from_to_files $src_dir/_browser.template.part2.html $dst_html
     echo "HTML test file generated at $dst_html"
 }
 
