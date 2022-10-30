@@ -27,37 +27,4 @@ performing deep comparison of arbitrary objects.
 Documentation and examples are available [here](doc). Version changelog is
 [here](CHANGELOG.md).
 
-## CLI and Automation
-
-### Tests
-
-```bash
-git clone <project_git_uri>
-cd <project_dir>/
-npm install
-npm run test # run all tests
-    # each test file can be run standalone and will not share memory (the `global`
-    # object for example) with other test files; this explains the multiple
-    # entries of the `scripts` object in `package.json`, instead of a single
-    # entry as follows for example:
-    #     `"test": "echo Running tests... && mocha ./tests/_index.js ./tests/jsu*.js && echo Finished!"`
-    #         if the tests are not run via npm, replace mocha with ./node_modules/mocha/bin/mocha.js
-    #         in the above command to explicitly use the version of mocha
-    #         installed for this project
-```
-
-### Advanced checks
-
-After `npm install`, `npm run check` should be preferred, in order to do the
-following.
-1. Check that the correct version of ECMAScript is targeted. jshint is used for
-this and run implicitly with the linting options defined in `.jshintrc`.
-2. Run tests.
-
-### More
-
-We use the following Node.js packages which were all installed using `npm install <package> --save-dev`.
-- (tests) mocha for testing.
-- (tests) sinon for spies, stubs and mocks.
-- (tests) jsdom to imitate in a Node.js environment the behavior of a browser.
-- (others) jshint for assurance on supported ECMAScript specifications.
+See this [file](DEVELOP.md) for development and maintenance notes.

@@ -63,11 +63,12 @@ function() {
 
     API.isBoolean = function(value) { return typeof value === 'boolean'; };
 
-    API.isNumber = Number.isFinite || function(value) { // polyfill for Number.isFinite()
-        return typeof value === 'number' && isFinite(value);
-        // Number.isFinite() is used because we want to define a number as a
-        // finite value (strings excluded)
+    API._getIsNumberImpl = function() { // introduced so that all implementations can be easily tested
+        return Number.isFinite || function(value) { // polyfill for Number.isFinite()
+            return typeof value === 'number' && isFinite(value);
+        }; // Number.isFinite() is used because we want to define a number as a finite value (strings excluded)
     };
+    API.isNumber = API._getIsNumberImpl();
 
     API.isNumberAlike = function(value) {
         var tov = typeof value;
@@ -76,9 +77,12 @@ function() {
 
     API.isString = function(value) { return typeof value === 'string' || value instanceof String; };
 
-    API.isArray = Array.isArray || function(arg) { // polyfill for Array.isArray()
-        return Object.prototype.toString.call(arg) === '[object Array]';
+    API._getIsArrayImpl = function() { // introduced so that all implementations can be easily tested
+        return Array.isArray || function(value) { // polyfill for Array.isArray()
+            return Object.prototype.toString.call(value) === '[object Array]';
+        };
     };
+    API.isArray = API._getIsArrayImpl();
 
     API.isCssColor = function(value) {
         return typeof CSS !== 'undefined' && CSS.supports ? CSS.supports('color', value) : null;
@@ -227,7 +231,7 @@ function() {
                 return copy1 !== undefined ? copy1 : cache.add(value, Symbol(value.description));
             }
 
-            case 'object': {
+            default: { // case 'object'
                 if(value === null) return value;
 
                 var copy2 = cache.get(value);
@@ -267,9 +271,6 @@ function() {
                 }
                 return copy2;
             }
-
-            default: // invalid case because all possible values are already handled above
-                throw new RangeError('The typeof operator returned an unexpected value');
         }
     }
 

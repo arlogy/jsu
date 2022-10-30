@@ -9,13 +9,18 @@
     "src/"
   ],
   "scripts": {
-    "check": "bash ./check.sh",
     "test": "echo Running tests... && npm run test:_index -s && npm run test:common -s && npm run test:csv_parser -s && npm run test:event -s && npm run test:latex -s && echo Finished testing!",
     "test:_index": "mocha ./tests/_index.js",
     "test:common": "mocha ./tests/jsu_common.js",
     "test:csv_parser": "mocha ./tests/jsu_csv_parser.js",
     "test:event": "mocha ./tests/jsu_event.js",
-    "test:latex": "mocha ./tests/jsu_latex.js"
+    "test:latex": "mocha ./tests/jsu_latex.js",
+    "browser:gen-tests": "bash ./scripts/build.sh browserify-tests",
+    "browser:check-tests": "karma start ./.karma.conf.js",
+    "browser:run-tests": "npm run browser:gen-tests && npm run browser:check-tests",
+    "code:validate-sources": "bash ./scripts/build.sh validate-code",
+    "code:coverage-excluding-browser": "nyc --reporter=lcov --reporter=text npm run test",
+    "code:check-state": "npm run code:validate-sources && npm run code:coverage-excluding-browser && npm run browser:run-tests"
   },
   "repository": {
     "type": "git",
@@ -44,9 +49,16 @@
   },
   "homepage": "https://github.com/arlogy/jsu#readme",
   "devDependencies": {
+    "browser-or-node": "^2.0.0",
+    "browserify": "^17.0.0",
     "jsdom": "^20.0.0",
     "jshint": "^2.13.5",
+    "karma": "^6.4.1",
+    "karma-chrome-launcher": "^3.1.1",
+    "karma-firefox-launcher": "^2.1.2",
+    "karma-mocha": "^2.0.1",
     "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
     "sinon": "^14.0.0"
   }
 }

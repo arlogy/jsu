@@ -1,3 +1,7 @@
+# Project-specific
+tests_browserified/*
+!tests_browserified/*template*
+
 # Logs
 logs
 *.log

@@ -63,7 +63,8 @@ Sets the visibility of an HTML element.
     should be passed for some HTML element when setting its visibility in a
     given context.
 - `dsp`: optional display style; possible values are those of the display CSS
-property (e.g. `'inline'`, `'block'`, etc.).
+property (e.g. `'inline'`, `'block'`, etc.), depending on browsers and the HTML
+element whose visibility is to be set.
 
 ## JsuCmn.isEltVisible(elt)
 

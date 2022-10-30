@@ -4,7 +4,10 @@
  Copyright (c) 2022 https://github.com/arlogy
 */
 
-const { randomUUID } = require('crypto');
+let { randomUUID } = require('crypto');
+if(!randomUUID) { // in browsers for example
+    randomUUID = () => new Date().toISOString() + Math.random();
+}
 
 // returns an arbitrary unique value that we don't care what it is
 const dummy = () => 'dummy-' + randomUUID();

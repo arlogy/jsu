@@ -17,6 +17,8 @@ afterEach(() => {
     sinon.restore(); // restore the default sandbox to prevent memory leak
 });
 
+const { isNode } = require("browser-or-node");
+
 (function() {
     // very simple implementation
     const CustomEventImpl = class CustomEvent extends Event {
@@ -30,10 +32,12 @@ afterEach(() => {
         }
     };
 
-    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-    global.window = dom.window;
-    global.document = dom.window.document;
-    global.CustomEvent = CustomEventImpl; // using dom.window.CustomEvent instead of CustomEventImpl results in errors
+    if(isNode) {
+        const dom = new JSDOM('<!DOCTYPE html><html></html>');
+        global.window = dom.window;
+        global.document = dom.window.document;
+        global.CustomEvent = CustomEventImpl; // using dom.window.CustomEvent instead of CustomEventImpl results in errors
+    }
 
     // same implementation as in the code to be tested
     function isNumber(value) {
@@ -44,23 +48,37 @@ afterEach(() => {
         describe('new JsuEvt.EventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
             const targetTypes = [undefined, null, window.EventTarget];
             it('should never fail', () => {
-                targetTypes.forEach(function(val) {
-                    sinon.stub(global, 'EventTarget').value(val);
+                const checkImpl = () => {
                     assert.strictEqual(new JsuEvt.EventTarget() instanceof JsuEvt.EventTarget, true);
-                });
+                };
+                if(isNode) {
+                    targetTypes.forEach(function(val) {
+                        sinon.stub(global, 'EventTarget').value(val);
+                        checkImpl();
+                    });
+                }
+                else {
+                    checkImpl();
+                }
             });
             it('should only have the expected properties', () => {
                 const expectedProps = ['addEventListener', 'dispatchEvent', 'removeEventListener'];
-                targetTypes.forEach(function(val) {
-                    sinon.stub(global, 'EventTarget').value(val);
+                const checkImpl = () => {
                     const eTarget = new JsuEvt.EventTarget();
                     assert.strictEqual(objectHasOnlyProperties(eTarget, expectedProps), true);
-                });
+                };
+                if(isNode) {
+                    targetTypes.forEach(function(val) {
+                        sinon.stub(global, 'EventTarget').value(val);
+                        checkImpl();
+                    });
+                }
+                else {
+                    checkImpl();
+                }
             });
             it('should correctly handle event listeners', () => {
-                sinon.stub(global, 'Event').value(window.Event);
-                targetTypes.forEach(function(val) {
-                    sinon.stub(global, 'EventTarget').value(val);
+                const checkImpl = () => {
                     const eventPool = [
                         new Event('acc'), new Event('acc'), new Event('acc'),
                     ];
@@ -85,7 +103,17 @@ afterEach(() => {
                     eTarget.removeEventListener('acc', accumulate); // the listener is now removed
                     eTarget.dispatchEvent(new Event('acc'));
                     assert.strictEqual(acc, 15);
-                });
+                };
+                if(isNode) {
+                    sinon.stub(global, 'Event').value(window.Event);
+                    targetTypes.forEach(function(val) {
+                        sinon.stub(global, 'EventTarget').value(val);
+                        checkImpl();
+                    });
+                }
+                else {
+                    checkImpl();
+                }
             });
         });
     })();
@@ -160,7 +188,7 @@ afterEach(() => {
 
                 // passed one argument (onFinished) to it(); see the 'asynchronous code' section in the Mocha documentation
                 it('should cause the timer to start, timeout and stop accordingly', function(onFinished) {
-                    this.timeout(3000); // set timeout limit for the test case
+                    this.timeout(0); // disable timeout limit for the test case
                     // set a limit for numbers so that each timer doesn't take too long before it times out
                     const entries = timeDels.filter(e => !isNumber(e) || e <= testLimit);
                     entries.push(testLimit); // so the limit can be reached at least once

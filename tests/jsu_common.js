@@ -17,45 +17,65 @@ afterEach(() => {
     sinon.restore(); // restore the default sandbox to prevent memory leak
 });
 
+const { isNode } = require("browser-or-node");
+
 (function() {
-    const dom = new JSDOM('<!DOCTYPE html><html></html>');
-    global.window = dom.window;
-    global.document = dom.window.document;
-    global.CSS = undefined;
+    if(isNode) {
+        const dom = new JSDOM('<!DOCTYPE html><html></html>');
+        global.window = dom.window;
+        global.document = dom.window.document;
+        global.CSS = undefined;
+    }
 
     const falsyValues = funcParams.filter(x => !x);
     const valfalCssDisplays = [...cssDisplays, ...falsyValues]; // valid and falsy CSS displays
     const numbers = funcParams.filter(x => typeof x === 'number' || typeof x === 'bigint');
 
-    function getCssDisplay(vis, dsp) {
-        return vis ? (dsp && dsp !== 'none' ? dsp : 'revert')
+    function getCssDisplay(vis, dsp, testDisplay) {
+        // testDisplay is introduced for testing purposes only
+        // ignore it if you want to focus only on the expected actual implementation
+        return vis ? (dsp && dsp !== 'none' ? (testDisplay || dsp) : 'revert')
                    : 'none';
     }
 
     (function() {
         describe('getLocalStorageItem() && setLocalStorageItem()', () => {
             it('should fail if window.localSotrage is not available', () => {
-                // accessing window.localStorage will throw an exception because no URL is configured for dom
-                const dom = new JSDOM('<!DOCTYPE html><html></html>');
-                sinon.stub(global, 'window').value(dom.window);
-                funcParams.forEach(function(key) {
-                    funcParams.forEach(function(val) {
-                        assert.strictEqual(JsuCmn.setLocalStorageItem(key, val), false);
-                        assert.strictEqual(JsuCmn.getLocalStorageItem(key), null);
+                const checkImpl = () => {
+                    funcParams.forEach(function(key) {
+                        funcParams.forEach(function(val) {
+                            assert.strictEqual(JsuCmn.setLocalStorageItem(key, val), false);
+                            assert.strictEqual(JsuCmn.getLocalStorageItem(key), null);
+                        });
                     });
-                });
+                };
+                if(isNode) {
+                    [undefined, {}, {'localStorage':null}].forEach(function(winObj) {
+                        sinon.stub(global, 'window').value(winObj);
+                        checkImpl();
+                    });
+                }
+                else {
+                    [undefined, null].forEach(function(storageObj) {
+                        sinon.stub(window, 'localStorage').value(storageObj);
+                        checkImpl();
+                    });
+                }
             });
-            it('should succeed if window.localStorage is available unless the key or the value is a symbol', () => {
-                const dom = new JSDOM('<!DOCTYPE html><html></html>', {
-                    url: 'https://fake_url/',
-                });
-                sinon.stub(global, 'window').value(dom.window);
+            it('should succeed otherwise unless the key or the value cannot be converted to a string', () => {
+                if(isNode) {
+                    const dom = new JSDOM('<!DOCTYPE html><html></html>', {
+                        url: 'https://fake_url/', // so that accessing window.localStorage doesn't throw an exception
+                    });
+                    sinon.stub(global, 'window').value(dom.window);
+                }
                 funcParams.forEach(function(key) {
                     funcParams.forEach(function(val) {
                         if(JsuCmn.setLocalStorageItem(key, val)) {
                             assert.strictEqual(JsuCmn.getLocalStorageItem(key), val+'');
                         }
-                        else {
+                        else { // fails because a symbol cannot be implicitly converted to a string
+                               //     see Symbol type conversions in the documentation
                             assert.strictEqual(typeof key === 'symbol' || typeof val === 'symbol', true);
                         }
                     });
@@ -67,13 +87,19 @@ afterEach(() => {
     (function() {
         describe('setEltVisible()', () => {
             it('should correctly set the CSS display of an HTML element', function() {
-                this.timeout(0); // disable timeout limit for the test case
                 htmlVisualTagNames.forEach(function(tag) {
                     const elt = document.createElement(tag);
                     funcParams.forEach(function(vis) {
                         valfalCssDisplays.forEach(function(dsp) {
+                            let testDisplay = undefined;
+                            if(!isNode) {
+                                // necessary for web browsers because dsp can be ignored when set as CSS display
+                                elt.style.display = dsp;
+                                const dspAllowed = elt.style.display === dsp; // is dsp a valid CSS display for elt?
+                                if(!dspAllowed) testDisplay = elt.style.display;
+                            }
                             JsuCmn.setEltVisible(elt, vis, dsp);
-                            assert.strictEqual(elt.style.display, getCssDisplay(vis, dsp));
+                            assert.strictEqual(elt.style.display, getCssDisplay(vis, dsp, testDisplay));
                         });
                     });
                 });
@@ -101,17 +127,19 @@ afterEach(() => {
 
     (function() {
         describe('switchEltVisibility()', () => {
-            it('should toggle the visibility of an HTML element and set its CSS display accordingly', function() {
+            it('should toggle the visibility of an HTML element', function() {
                 this.timeout(0); // disable timeout limit for the test case
                 htmlVisualTagNames.forEach(function(tag) {
                     const elt = document.createElement(tag);
-                    valfalCssDisplays.forEach(function(dsp) {
-                        [true, false].forEach(function(vis) {
-                            JsuCmn.setEltVisible(elt, vis); // we don't care about dsp here
+                    [true, false].forEach(function(vis) {
+                        valfalCssDisplays.forEach(function(dsp) {
+                            const isEltVisible = sinon.stub(JsuCmn, 'isEltVisible').returns(vis);
+                            const setEltVisible = sinon.stub(JsuCmn, 'setEltVisible');
                             JsuCmn.switchEltVisibility(elt, dsp);
-                            const cvis = JsuCmn.isEltVisible(elt); // currently visible?
-                            assert.strictEqual(cvis, !vis);
-                            assert.strictEqual(elt.style.display, getCssDisplay(cvis, dsp));
+                            assert.strictEqual(isEltVisible.calledOnceWithExactly(elt), true);
+                            assert.strictEqual(setEltVisible.calledOnceWithExactly(elt, !isEltVisible.getCall(0).returnValue, dsp), true);
+                            assert.strictEqual(setEltVisible.calledAfter(isEltVisible), true);
+                            sinon.restore(); // avoid leak threshold warning (instead of isEltVisible.restore() and others for example)
                         });
                     });
                 });
@@ -137,16 +165,19 @@ afterEach(() => {
     (function() {
         describe('isNumber()', () => {
             const values = [...funcParams, '-10', '0', '10.99']; // add finite numbers that are strings
-            const numIsFinite = Number.isFinite;
-            it('should return true only for a finite number that is not a string', () => {
+            const acceptsValue = Number.isFinite;
+            it('should return true only for a finite number that is not a string (when Number.isFinite() is available)', () => {
+                assert.strictEqual(typeof Number.isFinite, 'function');
+                sinon.stub(JsuCmn, 'isNumber').callsFake(JsuCmn._getIsNumberImpl());
                 values.forEach(function(val) {
-                    assert.strictEqual(JsuCmn.isNumber(val), numIsFinite(val));
+                    assert.strictEqual(JsuCmn.isNumber(val), acceptsValue(val));
                 });
             });
-            it('should behave correctly if Number.isFinite() is not available', () => {
+            it('should return true only for a finite number that is not a string (when Number.isFinite() is not available)', () => {
                 sinon.stub(Number, 'isFinite').value(undefined);
+                sinon.stub(JsuCmn, 'isNumber').callsFake(JsuCmn._getIsNumberImpl());
                 values.forEach(function(val) {
-                    assert.strictEqual(JsuCmn.isNumber(val), numIsFinite(val));
+                    assert.strictEqual(JsuCmn.isNumber(val), acceptsValue(val));
                 });
             });
         });
@@ -176,16 +207,19 @@ afterEach(() => {
 
     (function() {
         describe('isArray()', () => {
-            const isArray = Array.isArray;
-            it('should return true only for an array', () => {
+            const acceptsValue = Array.isArray;
+            it('should return true only for an array (when Array.isArray() is available)', () => {
+                assert.strictEqual(typeof Array.isArray, 'function');
+                sinon.stub(JsuCmn, 'isArray').callsFake(JsuCmn._getIsArrayImpl());
                 funcParams.forEach(function(val) {
-                    assert.strictEqual(JsuCmn.isArray(val), isArray(val));
+                    assert.strictEqual(JsuCmn.isArray(val), acceptsValue(val));
                 });
             });
-            it('should behave correctly if Array.isArray() is not available', () => {
+            it('should return true only for an array (when Array.isArray() is not available)', () => {
                 sinon.stub(Array, 'isArray').value(undefined);
+                sinon.stub(JsuCmn, 'isArray').callsFake(JsuCmn._getIsArrayImpl());
                 funcParams.forEach(function(val) {
-                    assert.strictEqual(JsuCmn.isArray(val), isArray(val));
+                    assert.strictEqual(JsuCmn.isArray(val), acceptsValue(val));
                 });
             });
         });
@@ -194,20 +228,28 @@ afterEach(() => {
     (function() {
         describe('isCssColor()', () => {
             it('should return the same value as CSS.supports() if the function is defined, or null otherwise', () => {
-                const cssDefs = [undefined, {supports:undefined}, {supports:sinon.stub().callsFake(dummy)}];
-                cssDefs.forEach(function(def) {
-                    sinon.stub(global, 'CSS').value(def);
-                    funcParams.forEach(function(val) {
-                        const retVal = JsuCmn.isCssColor(val);
-                        if(CSS && CSS.supports) {
-                            const supports = CSS.supports;
-                            assert.strictEqual(supports.calledOnceWithExactly('color', val), true);
-                            assert.strictEqual(retVal, supports.getCall(0).returnValue);
-                            supports.resetHistory();
-                        }
-                        else assert.strictEqual(retVal, null);
+                if(isNode) {
+                    const cssDefs = [undefined, {supports:undefined}, {supports:sinon.stub().callsFake(dummy)}];
+                    cssDefs.forEach(function(def) {
+                        sinon.stub(global, 'CSS').value(def);
+                        funcParams.forEach(function(val) {
+                            const retVal = JsuCmn.isCssColor(val);
+                            if(CSS && CSS.supports) {
+                                const supports = CSS.supports;
+                                assert.strictEqual(supports.calledOnceWithExactly('color', val), true);
+                                assert.strictEqual(retVal, supports.getCall(0).returnValue);
+                                supports.resetHistory();
+                            }
+                            else assert.strictEqual(retVal, null);
+                        });
                     });
-                });
+                }
+                else {
+                    // first remove symbols as they cannot be implicitly converted to string
+                    funcParams.filter(x => typeof x !== 'symbol').forEach(function(val) {
+                        assert.strictEqual(JsuCmn.isCssColor(val), CSS.supports(val, 'color'));
+                    });
+                }
             });
         });
     })();
@@ -356,11 +398,14 @@ afterEach(() => {
                     assert.strictEqual(obj.fontWeight, 'bolder');
                     assert.strictEqual(obj.fontFamily, 'cursive');
                     // it seems that jsdom sets the following obj properties differently when parseInlineCssStyle() is called
-                    //     they are therefore commented in the test case
-//                    assert.strictEqual(obj.font.split(' ').sort().join(' '), font.split(' ').sort().join(' '));
-//                    assert.strictEqual(obj.fontStretch, 'condensed');
-//                    assert.strictEqual(obj.fontSize, '16px');
-//                    assert.strictEqual(obj.fontLineHeight, '3');
+                    //     they are therefore not tested under Node.js
+                    if(!isNode) {
+                        // tests pass in browsers
+                        assert.strictEqual(obj.font, font.replace('16px/3', '16px / 3'));
+                        assert.strictEqual(obj.fontStretch, 'condensed');
+                        assert.strictEqual(obj.fontSize, '16px');
+//                        assert.strictEqual(obj.fontLineHeight, '3'); // fails, probably depends on browser versions
+                    }
                 });
             });
         });
@@ -566,15 +611,34 @@ afterEach(() => {
         describe('cloneDeep()', () => {
             const clnd = JsuCmn.cloneDeep;
 
+            // returns a custom empty cache according to JsuCmn.cloneDeep()
+            const emptyCache = () => ({
+                _keys: [],
+                _vals: [],
+                get: function(key) {
+                    const idx = this._keys.indexOf(key);
+                    return idx !== -1 ? this._vals[idx] : undefined;
+                },
+                add: function(key, val) {
+                    this._keys.push(key);
+                    this._vals.push(val);
+                    return val;
+                },
+            });
+
             const checkCaching = (val) => {
                 const arrList = [
-                    clnd([val, val]),
-                    // we use Object.entries(...).map(...) to create an array from an object
-                    Object.entries(clnd({a:val, b:val})).map(x => x[1]),
+                    ...[undefined, null, emptyCache()].map(
+                        x => clnd([val, val], x)
+                    ),
+                    ...[undefined, null, emptyCache()].map(
+                        // we use Object.entries(...).map(...) to create an array from an object
+                        x => Object.entries(clnd({a:val, b:val}, x)).map(y => y[1])
+                    ),
                 ];
                 arrList.forEach(function(arrVal) {
-                    const k = arrVal[0];
-                    assert.strictEqual(arrVal.every(x => x === k || (Number.isNaN(x) && Number.isNaN(k))), true);
+                    const firstElt = arrVal[0];
+                    assert.strictEqual(arrVal.every(x => x === firstElt || (Number.isNaN(x) && Number.isNaN(firstElt))), true);
                 });
             };
 
@@ -589,7 +653,7 @@ afterEach(() => {
                 checkCaching(val);
             };
 
-            const implParams = funcParams.slice(0); // all types of parameters handled by cloneDeep()
+            const implParams = funcParams.slice(0); // all types of parameters handled by JsuCmn.cloneDeep()
             implParams.push(new Date());
             implParams.push(new Date('9999-12-31'));
             (function() {
@@ -634,7 +698,12 @@ afterEach(() => {
             });
 
             it('should correctly clone a number', () => {
-                const numbers = implParams.filter(x => typeof x === 'number');
+                [NaN].forEach(function(val) {
+                    checkImpl(val, function(copy) {
+                        assert.strictEqual(Number.isNaN(copy) && Number.isNaN(val), true);
+                    });
+                });
+                const numbers = implParams.filter(x => typeof x === 'number' && !Number.isNaN(x));
                 numbers.forEach(function(val) {
                     checkImpl(val, function(copy) {
                         assert.strictEqual(copy, val);
@@ -717,6 +786,8 @@ afterEach(() => {
                                 arr.forEach(function(val, i) {
                                     if(typeof val === 'symbol')
                                         assert.deepStrictEqual(copy[i].description, val.description);
+                                    else if(Number.isNaN(val))
+                                        assert.strictEqual(Number.isNaN(val), true);
                                     else
                                         assert.deepStrictEqual(copy[i], val);
                                 });
@@ -725,6 +796,8 @@ afterEach(() => {
                                 arr.forEach(function(val, i) {
                                     if(typeof val === 'symbol')
                                         assert.deepStrictEqual(copy[i].description, val.description);
+                                    else if(Number.isNaN(val))
+                                        assert.strictEqual(Number.isNaN(val), true);
                                     else if(val instanceof Boolean || val instanceof Date || val instanceof Number || val instanceof String)
                                         assert.deepStrictEqual(copy[i], val);
                                     else if(typeof val === 'object' && val !== null && !Array.isArray(val))
@@ -815,7 +888,7 @@ afterEach(() => {
 
             it('should correctly handle the other aspects of cloneCustomImpl (case 1: it is ignored in favor of the default impl. if it returns undefined)', () => {
                 const obj = {x:dummy()};
-                implParams.forEach(function(customClone) {
+                implParams.filter(x => !Number.isNaN(x)).forEach(function(customClone) {
                     const cloneCustomImpl = sinon.fake.returns(customClone);
                     assert.deepStrictEqual(clnd(obj, undefined, cloneCustomImpl), (function() {
                         return customClone === undefined ? clnd(obj) : customClone;
