@@ -30,11 +30,10 @@ assuming they have already been generated.
 - `npm run browser:run-tests`: execute the above browser-specific commands.
 
 More checks
-- `npm run code:validate-sources`: validate source code; e.g. check that the
+- `npm run code:check-sources`: validate source code; e.g. check that the
 correct version of ECMAScript is targeted.
-- `npm run code:coverage-excluding-browser`: run tests excluding
-browser-specific ones to generate informative code coverage in the `coverage`
-directory.
+- `npm run code:gen-main-test-coverage`: run tests excluding browser-specific
+ones to generate informative code coverage in the `coverage` directory.
 - `npm run code:check-state` (**key**): validate source code and run all tests,
 including code coverage generation; this is the command to use in GitLab CI/CD
 continuous integration for example.

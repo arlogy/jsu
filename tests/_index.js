@@ -25,28 +25,28 @@ const assert = require('assert');
             it('should always expose the same object', () => {
                 const k = 5;
 
-                const common = require('../src/jsu_common.js');
+                const JsuCmn = require('../src/jsu_common.js');
                 for(let i = 0; i < k; i++) {
-                    assert.strictEqual(Jsu.Common, common);
-                    assert.deepStrictEqual(Jsu.Common, common);
+                    assert.strictEqual(Jsu.Common, JsuCmn);
+                    assert.deepStrictEqual(Jsu.Common, JsuCmn);
                 }
 
-                const csv_parser = require('../src/jsu_csv_parser.js');
+                const JsuCsvPsr = require('../src/jsu_csv_parser.js');
                 for(let i = 0; i < k; i++) {
-                    assert.strictEqual(Jsu.CsvParser, csv_parser);
-                    assert.deepStrictEqual(Jsu.CsvParser, csv_parser);
+                    assert.strictEqual(Jsu.CsvParser, JsuCsvPsr);
+                    assert.deepStrictEqual(Jsu.CsvParser, JsuCsvPsr);
                 }
 
-                const event = require('../src/jsu_event.js');
+                const JsuEvt = require('../src/jsu_event.js');
                 for(let i = 0; i < k; i++) {
-                    assert.strictEqual(Jsu.Event, event);
-                    assert.deepStrictEqual(Jsu.Event, event);
+                    assert.strictEqual(Jsu.Event, JsuEvt);
+                    assert.deepStrictEqual(Jsu.Event, JsuEvt);
                 }
 
-                const latex = require('../src/jsu_latex.js');
+                const JsuLtx = require('../src/jsu_latex.js');
                 for(let i = 0; i < k; i++) {
-                    assert.strictEqual(Jsu.Latex, latex);
-                    assert.deepStrictEqual(Jsu.Latex, latex);
+                    assert.strictEqual(Jsu.Latex, JsuLtx);
+                    assert.deepStrictEqual(Jsu.Latex, JsuLtx);
                 }
             });
         });

@@ -39,7 +39,7 @@ const { isNode } = require("browser-or-node");
     }
 
     (function() {
-        describe('getLocalStorageItem() && setLocalStorageItem()', () => {
+        describe('getLocalStorageItem() & setLocalStorageItem()', () => {
             it('should fail if window.localSotrage is not available', () => {
                 const checkImpl = () => {
                     funcParams.forEach(function(key) {
@@ -49,18 +49,10 @@ const { isNode } = require("browser-or-node");
                         });
                     });
                 };
-                if(isNode) {
-                    [undefined, {}, {'localStorage':null}].forEach(function(winObj) {
-                        sinon.stub(global, 'window').value(winObj);
-                        checkImpl();
-                    });
-                }
-                else {
-                    [undefined, null].forEach(function(storageObj) {
-                        sinon.stub(window, 'localStorage').value(storageObj);
-                        checkImpl();
-                    });
-                }
+                [undefined, null].forEach(function(storageObj) {
+                    sinon.stub(window, 'localStorage').value(storageObj);
+                    checkImpl();
+                });
             });
             it('should succeed otherwise unless the key or the value cannot be converted to a string', () => {
                 if(isNode) {
@@ -228,28 +220,21 @@ const { isNode } = require("browser-or-node");
     (function() {
         describe('isCssColor()', () => {
             it('should return the same value as CSS.supports() if the function is defined, or null otherwise', () => {
-                if(isNode) {
-                    const cssDefs = [undefined, {supports:undefined}, {supports:sinon.stub().callsFake(dummy)}];
-                    cssDefs.forEach(function(def) {
-                        sinon.stub(global, 'CSS').value(def);
-                        funcParams.forEach(function(val) {
-                            const retVal = JsuCmn.isCssColor(val);
-                            if(CSS && CSS.supports) {
-                                const supports = CSS.supports;
-                                assert.strictEqual(supports.calledOnceWithExactly('color', val), true);
-                                assert.strictEqual(retVal, supports.getCall(0).returnValue);
-                                supports.resetHistory();
-                            }
-                            else assert.strictEqual(retVal, null);
-                        });
+                const cssDefs = [undefined, {}, {supports:null}, {supports:sinon.fake(dummy)}];
+                cssDefs.forEach(function(def) {
+                    sinon.stub(isNode ? global : window, 'CSS').value(def);
+                    funcParams.forEach(function(val) {
+                        const retVal = JsuCmn.isCssColor(val);
+                        if(CSS && CSS.supports) {
+                            const supports = CSS.supports;
+                            assert.strictEqual(supports.calledOnceWithExactly('color', val), true);
+                            assert.strictEqual(retVal, supports.getCall(0).returnValue);
+                            supports.resetHistory();
+                        }
+                        else assert.strictEqual(retVal, null);
                     });
-                }
-                else {
-                    // first remove symbols as they cannot be implicitly converted to string
-                    funcParams.filter(x => typeof x !== 'symbol').forEach(function(val) {
-                        assert.strictEqual(JsuCmn.isCssColor(val), CSS.supports(val, 'color'));
-                    });
-                }
+                    sinon.restore(); // prevent "global leak(s) detected" warning in real browsers
+                });
             });
         });
     })();
@@ -271,7 +256,7 @@ const { isNode } = require("browser-or-node");
     })();
 
     (function() {
-        describe('copyPropsNoCheck() && copyPropsAndCheck()', () => {
+        describe('copyPropsNoCheck() & copyPropsAndCheck()', () => {
             it('should not copy anything if there are no targeted properties', () => {
                 for(let i = 0; i < 2; i++) {
                     const fromObj = {a:0};

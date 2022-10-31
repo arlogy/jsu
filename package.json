@@ -18,9 +18,9 @@
     "browser:gen-tests": "bash ./scripts/build.sh browserify-tests",
     "browser:check-tests": "karma start ./.karma.conf.js",
     "browser:run-tests": "npm run browser:gen-tests && npm run browser:check-tests",
-    "code:validate-sources": "bash ./scripts/build.sh validate-code",
-    "code:coverage-excluding-browser": "nyc --reporter=lcov --reporter=text npm run test",
-    "code:check-state": "npm run code:validate-sources && npm run code:coverage-excluding-browser && npm run browser:run-tests"
+    "code:check-sources": "bash ./scripts/build.sh validate-sources",
+    "code:gen-main-test-coverage": "nyc --reporter=lcov --reporter=text npm run test",
+    "code:check-state": "npm run code:check-sources && npm run code:gen-main-test-coverage && npm run browser:run-tests"
   },
   "repository": {
     "type": "git",

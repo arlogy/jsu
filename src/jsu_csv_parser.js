@@ -48,34 +48,30 @@ function() {
         var skipEmptyLinesWhen = 'skipEmptyLinesWhen' in options ? options.skipEmptyLinesWhen : -1;
         var skipLinesWithWarnings = 'skipLinesWithWarnings' in options && options.skipLinesWithWarnings === true;
 
-        // reject invalid options
+        // validate options
 
-        function validate() {
-            [fieldDels, fieldSeps, lineSeps].forEach(function(arr) {
-                if(!isArray(arr)) throw new RangeError(
-                    'The field or line separators are not an array, or there is an internal error on the field delimiter'
-                );
+        [fieldDels, fieldSeps, lineSeps].forEach(function(arr) {
+            if(!isArray(arr)) throw new RangeError(
+                'The field or line separators are not an array, or there is an internal error on the field delimiter'
+            );
 
-                if(!arr.every(isStringAndNonEmpty)) throw new RangeError(
-                    'Only non-empty strings are allowed for the field delimiter, field separators and line separators'
-                );
+            if(!arr.every(isStringAndNonEmpty)) throw new RangeError(
+                'Only non-empty strings are allowed for the field delimiter, field separators and line separators'
+            );
 
-                if(hasDuplicates(arr)) throw new RangeError(
-                    'The field or line separators contain duplicates, or there is an internal error on the field delimiter'
-                );
-            });
+            if(hasDuplicates(arr)) throw new RangeError(
+                'The field or line separators contain duplicates, or there is an internal error on the field delimiter'
+            );
+        });
 
-            [
-                [fieldDels, fieldSeps, lineSeps],
-                [fieldSeps, fieldDels, lineSeps],
-                [lineSeps, fieldDels, fieldSeps],
-            ].forEach(function(arr) {
-                if(!arr[0].every(function(val) { return arr[1].indexOf(val) === -1 && arr[2].indexOf(val) === -1; }))
-                    throw new RangeError('Values cannot be shared between field delimiter, field separators and line separators');
-            });
-        }
-
-        validate();
+        [
+            [fieldDels, fieldSeps, lineSeps],
+            [fieldSeps, fieldDels, lineSeps],
+            [lineSeps, fieldDels, fieldSeps],
+        ].forEach(function(arr) {
+            if(!arr[0].every(function(val) { return arr[1].indexOf(val) === -1 && arr[2].indexOf(val) === -1; }))
+                throw new RangeError('Values cannot be shared between field delimiter, field separators and line separators');
+        });
 
         // convert object strings to primitive strings
 
@@ -83,7 +79,7 @@ function() {
         fieldSeps = fieldSeps.map(function(val) { return val.toString(); });
         lineSeps = lineSeps.map(function(val) { return val.toString(); });
 
-        // set the properties of this parser
+        // set other options accordingly
 
         var stdLineSeps = ['\r', '\n', '\r\n']; // standard line separators (aka line breaks)
         smartRegex = smartRegex &&
@@ -110,6 +106,8 @@ function() {
             regexPatterns.sort().reverse(); // see (1) below
             regexPatterns.push('.');
         }
+
+        // set the properties of this parser
 
         this._fieldDel = fieldDels[0];
         this._fieldSeps = fieldSeps;

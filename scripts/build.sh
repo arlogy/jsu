@@ -13,14 +13,14 @@ browserify_tests() {
     local src_dir=$ROOT/tests
     local dst_dir=$ROOT/tests_browserified
     local dst_html=$dst_dir/index.html
-    rm -rf $dst_dir && mkdir -p $dst_dir
+    echo "Remove and recreate $dst_dir" && rm -rf $dst_dir && mkdir -p $dst_dir
     read_from_to_files $src_dir/_browser.template.part1.html $dst_html
     local fpath
     for fpath in $src_dir/*.js; do # we consider all *.js files for simplicity
         local fname=$(basename $fpath)
         local cmd="npx browserify $fpath --outfile $dst_dir/$fname"
         echo "$cmd" && bash $cmd
-        echo "        <script src=\"$dst_dir/$fname\"></script>" >> $dst_html
+        echo "        <script src=\"./$fname\"></script>" >> $dst_html
     done
     read_from_to_files $src_dir/_browser.template.part2.html $dst_html
     echo "HTML test file generated at $dst_html"
@@ -28,7 +28,7 @@ browserify_tests() {
 
 # Validates source code against the rules established for the jshint npm
 # package: checks that the correct version of ECMAScript is targeted.
-validate_code() {
+validate_sources() {
     # run the jshint command and make sure that only allowed errors are found;
     # note that it is the number of errors that is checked instead of the actual
     # error messages, which is sufficient
@@ -48,8 +48,8 @@ fi
 
 if [ $1 == "browserify-tests" ]; then
     browserify_tests
-elif [ $1 == "validate-code" ]; then
-    validate_code
+elif [ $1 == "validate-sources" ]; then
+    validate_sources
 else
-    echo "Parameter must be any of: browserify-tests, validate-code" && exit 1
+    echo "Parameter must be any of: browserify-tests, validate-sources" && exit 1
 fi

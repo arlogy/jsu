@@ -46,39 +46,27 @@ const { isNode } = require("browser-or-node");
 
     (function() {
         describe('new JsuEvt.EventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
-            const targetTypes = [undefined, null, window.EventTarget];
+            const checkImpl = (checker) => {
+                [undefined, null, window.EventTarget].forEach(function(val) {
+                    sinon.stub(window, 'EventTarget').value(val);
+                    checker();
+                    sinon.restore(); // prevent "global leak(s) detected" warning in real browsers
+                });
+            };
             it('should never fail', () => {
-                const checkImpl = () => {
+                checkImpl(function() {
                     assert.strictEqual(new JsuEvt.EventTarget() instanceof JsuEvt.EventTarget, true);
-                };
-                if(isNode) {
-                    targetTypes.forEach(function(val) {
-                        sinon.stub(global, 'EventTarget').value(val);
-                        checkImpl();
-                    });
-                }
-                else {
-                    checkImpl();
-                }
+                });
             });
             it('should only have the expected properties', () => {
                 const expectedProps = ['addEventListener', 'dispatchEvent', 'removeEventListener'];
-                const checkImpl = () => {
+                checkImpl(function() {
                     const eTarget = new JsuEvt.EventTarget();
                     assert.strictEqual(objectHasOnlyProperties(eTarget, expectedProps), true);
-                };
-                if(isNode) {
-                    targetTypes.forEach(function(val) {
-                        sinon.stub(global, 'EventTarget').value(val);
-                        checkImpl();
-                    });
-                }
-                else {
-                    checkImpl();
-                }
+                });
             });
             it('should correctly handle event listeners', () => {
-                const checkImpl = () => {
+                checkImpl(function() {
                     const eventPool = [
                         new Event('acc'), new Event('acc'), new Event('acc'),
                     ];
@@ -103,17 +91,7 @@ const { isNode } = require("browser-or-node");
                     eTarget.removeEventListener('acc', accumulate); // the listener is now removed
                     eTarget.dispatchEvent(new Event('acc'));
                     assert.strictEqual(acc, 15);
-                };
-                if(isNode) {
-                    sinon.stub(global, 'Event').value(window.Event);
-                    targetTypes.forEach(function(val) {
-                        sinon.stub(global, 'EventTarget').value(val);
-                        checkImpl();
-                    });
-                }
-                else {
-                    checkImpl();
-                }
+                });
             });
         });
     })();
