@@ -14,11 +14,11 @@ ctrl_c() {
 # Reads from one file to another. This function creates the destination file if
 # it does not exist and appends content to it.
 read_from_to_files() {
-    local src_path=$1
-    local dest_path=$2
+    local src_path="$1"
+    local dest_path="$2"
     # read lines while preserving leading/trailing spaces (IFS cleared) and
     # preventing backslash interpretation (option -r)
     while IFS= read -r line; do
-        echo "$line" >> $dest_path
-    done < $src_path
+        echo "$line" >> "$dest_path"
+    done < "$src_path"
 }
