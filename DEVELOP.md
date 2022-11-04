@@ -8,7 +8,7 @@
 git clone <project_git_uri>
 cd <project_dir>/
 npm install
-npm run test # run all tests
+npm run test # run all API tests
     # each test file can be run standalone and will not share memory (the `global`
     # object for example) with other test files; this explains the multiple `test:...`
     # entries of the `scripts` object in `package.json`, instead of a single
@@ -16,7 +16,7 @@ npm run test # run all tests
     #     `"test": "echo Running tests... && mocha ./tests/_index.js ./tests/jsu*.js && echo Finished!"`
 ```
 
-### Advanced checks
+### Advanced checks (not optional)
 
 After `npm install`, the following commands can be considered, the most
 important being labeled "key".

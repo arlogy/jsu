@@ -17,7 +17,7 @@ afterEach(() => {
     sinon.restore(); // restore the default sandbox to prevent memory leak
 });
 
-const { isNode } = require("browser-or-node");
+const { isNode } = require('browser-or-node');
 
 (function() {
     // very simple implementation

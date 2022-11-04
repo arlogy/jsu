@@ -17,7 +17,7 @@ afterEach(() => {
     sinon.restore(); // restore the default sandbox to prevent memory leak
 });
 
-const { isNode } = require("browser-or-node");
+const { isNode } = require('browser-or-node');
 
 (function() {
     if(isNode) {
@@ -29,7 +29,7 @@ const { isNode } = require("browser-or-node");
 
     const falsyValues = funcParams.filter(x => !x);
     const valfalCssDisplays = [...cssDisplays, ...falsyValues]; // valid and falsy CSS displays
-    const numbers = funcParams.filter(x => typeof x === 'number' || typeof x === 'bigint');
+    const numbers = funcParams.filter(x => typeof x === 'number' || typeof x === 'bigint' || x instanceof Number);
 
     function getCssDisplay(vis, dsp, testDisplay) {
         // testDisplay is introduced for testing purposes only
@@ -156,16 +156,19 @@ const { isNode } = require("browser-or-node");
 
     (function() {
         describe('isNumber()', () => {
-            const values = [...funcParams, '-10', '0', '10.99']; // add finite numbers that are strings
+            const values = [
+                ...funcParams,
+                ...numbers.map(x => x + ''), // add numbers that are strings
+            ];
             const acceptsValue = Number.isFinite;
-            it('should return true only for a finite number that is not a string (when Number.isFinite() is available)', () => {
+            it('should return true only for a finite primitive number that is not a string (when Number.isFinite() is available)', () => {
                 assert.strictEqual(typeof Number.isFinite, 'function');
                 sinon.stub(JsuCmn, 'isNumber').callsFake(JsuCmn._getIsNumberImpl());
                 values.forEach(function(val) {
                     assert.strictEqual(JsuCmn.isNumber(val), acceptsValue(val));
                 });
             });
-            it('should return true only for a finite number that is not a string (when Number.isFinite() is not available)', () => {
+            it('should return true only for a finite primitive number that is not a string (when Number.isFinite() is not available)', () => {
                 sinon.stub(Number, 'isFinite').value(undefined);
                 sinon.stub(JsuCmn, 'isNumber').callsFake(JsuCmn._getIsNumberImpl());
                 values.forEach(function(val) {
@@ -177,7 +180,7 @@ const { isNode } = require("browser-or-node");
 
     (function() {
         describe('isNumberAlike()', () => {
-            it('should return true only for a finite number or a primitive string convertible to such a number', () => {
+            it('should return true only for a finite primitive number or a primitive string convertible to such a number', () => {
                 funcParams.forEach(function(val) {
                     const tov = typeof val;
                     const retVal = (tov === 'number' || tov === 'string') && isFinite(val);
@@ -399,7 +402,11 @@ const { isNode } = require("browser-or-node");
     (function() {
         describe('parseSuffixedValue()', () => {
             it('should return null in case of failure', () => {
-                [null, undefined, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, NaN, 'x1', ' x1'].forEach(function(val) {
+                const values = [
+                    ...funcParams.filter(x => !numbers.includes(x) && typeof x !== 'symbol' && (!JsuCmn.isString(x) || !isFinite(x))),
+                    Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, NaN, // they are excluded from the other test cases below
+                ];
+                values.forEach(function(val) {
                     assert.deepStrictEqual(JsuCmn.parseSuffixedValue(val), null);
                 });
             });
@@ -760,7 +767,7 @@ const { isNode } = require("browser-or-node");
                 });
             });
 
-            it('should correctly clone an array (case 1: clone and original share the same structure)', () => {
+            it('should correctly clone an array (case 1: clone and original should share the same structure)', () => {
                 [[], [...implParams]].forEach(function(arr) {
                     checkImpl(arr, function(copy, cloneCustomImpl) {
                         assert.strictEqual(Array.isArray(copy), true);
@@ -797,7 +804,7 @@ const { isNode } = require("browser-or-node");
                 });
             });
 
-            it('should correctly clone an array (case 2: cloning is as deep as necessary)', () => {
+            it('should correctly clone an array (case 2: cloning should be as deep as necessary)', () => {
                 let arr = [dummy()];
                 for(let i = 1; i <= 100; i++) {
                     const copy = clnd(arr);
@@ -860,7 +867,7 @@ const { isNode } = require("browser-or-node");
                 });
             });
 
-            it('should correctly clone other objects (case 4: cloning is as deep as necessary)', () => {
+            it('should correctly clone other objects (case 4: cloning should be as deep as necessary)', () => {
                 let obj = {x:dummy()};
                 for(let i = 1; i <= 100; i++) {
                     const copy = clnd(obj);

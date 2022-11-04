@@ -94,12 +94,12 @@ Returns whether a value is a primitive boolean (i.e. exactly `true` or `false`).
 
 ## JsuCmn.isNumber(value)
 
-Returns whether a value is a finite number that is not a string.
+Returns whether a value is a finite primitive number that is not a string.
 
 ## JsuCmn.isNumberAlike(value)
 
-Returns whether a value is a finite number or a primitive string convertible to
-such a number.
+Returns whether a value is a finite primitive number or a primitive string
+convertible to such a number.
 
 ## JsuCmn.isString(value)
 
