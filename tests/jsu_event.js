@@ -166,7 +166,7 @@ const { isNode } = require('browser-or-node');
 
                 // passed one argument (onFinished) to it(); see the 'asynchronous code' section in the Mocha documentation
                 it('should cause the timer to start, timeout and stop accordingly', function(onFinished) {
-                    this.timeout(0); // disable timeout limit for the test case
+                    this.timeout(5000); // set timeout limit for the test case
                     // set a limit for numbers so that each timer doesn't take too long before it times out
                     const entries = timeDels.filter(e => !isNumber(e) || e <= testLimit);
                     entries.push(testLimit); // so the limit can be reached at least once

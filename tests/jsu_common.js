@@ -102,7 +102,6 @@ const { isNode } = require('browser-or-node');
     (function() {
         describe('isEltVisible()', () => {
             it('should return whether the CSS display computed by window.getComputedStyle() is not none', function() {
-                this.timeout(0); // disable timeout limit for the test case
                 htmlVisualTagNames.forEach(function(tag) {
                     const elt = document.createElement(tag);
                     cssDisplays.forEach(function(dsp) {
@@ -120,7 +119,7 @@ const { isNode } = require('browser-or-node');
     (function() {
         describe('switchEltVisibility()', () => {
             it('should toggle the visibility of an HTML element', function() {
-                this.timeout(0); // disable timeout limit for the test case
+                this.timeout(10000); // set timeout limit for the test case
                 htmlVisualTagNames.forEach(function(tag) {
                     const elt = document.createElement(tag);
                     [true, false].forEach(function(vis) {

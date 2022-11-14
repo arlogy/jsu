@@ -21,7 +21,8 @@
     "code:check-scripts": "echo Testing scripts... && node -e \"console.log('')\" && bash ./scripts/defs.test.sh && node -e \"console.log('')\" && echo Scripts tested!",
     "code:check-sources": "bash ./scripts/build.sh validate-sources",
     "code:gen-main-test-coverage": "nyc --reporter=lcov --reporter=text npm run test",
-    "code:check-state": "npm run code:check-scripts && npm run code:check-sources && npm run code:gen-main-test-coverage && npm run browser:run-tests"
+    "code:check-state": "npm run code:check-scripts && npm run code:check-sources && npm run code:gen-main-test-coverage && npm run browser:run-tests",
+    "clean": "rm -rf .nyc_output coverage tests_browserified"
   },
   "repository": {
     "type": "git",

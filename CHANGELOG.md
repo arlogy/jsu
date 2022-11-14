@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0 - Next version
+
+- Implement internal improvements: public API unchanged.
+
 ## 1.4.0 - 2022/10/10
 
 - Update `JsuCmn.cloneDeep(value)` to `JsuCmn.cloneDeep(value, cache, cloneCustomImpl)`.

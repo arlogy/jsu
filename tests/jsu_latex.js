@@ -514,7 +514,7 @@ afterEach(() => {
                 }
             };
             it('should behave as expected when a shortcut is not implicitly introduced after insertion', function() {
-                this.timeout(0); // disable timeout limit for the test case
+                this.timeout(5000); // set timeout limit for the test case
                 const testData = (function() {
                     const retVal = [];
                     for(const strToUpdate of strArrToUpdate) {
