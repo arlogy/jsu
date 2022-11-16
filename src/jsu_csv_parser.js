@@ -17,10 +17,10 @@
     }
 })(
 function() {
-    // internal utility functions; regarding strings, please note that they
-    // should be transformed using toString() to allow consistent comparison of
-    // string primitives and string objects using the === operator or the switch
-    // statement for example
+    // internal utility functions; useful-note: regarding strings, be aware that
+    // they should be transformed using toString() to allow consistent
+    // comparison of string primitives and string objects using the === operator
+    // or the switch statement for example
     function isArray(val) { return Object.prototype.toString.call(val) === '[object Array]'; }
     function hasNoDuplicates(arr) {
         return arr.every(function(val, idx) { return arr.indexOf(val) === idx; });
@@ -48,6 +48,12 @@ function() {
         var skipEmptyLinesWhen = 'skipEmptyLinesWhen' in options ? options.skipEmptyLinesWhen : -1;
         var skipLinesWithWarnings = 'skipLinesWithWarnings' in options && options.skipLinesWithWarnings === true;
 
+        // convert object strings to primitive strings (see useful-note)
+
+        fieldDels = fieldDels.map(function(val) { return val instanceof String ? val.toString() : val; });
+        if(isArray(fieldSeps)) fieldSeps = fieldSeps.map(function(val) { return val instanceof String ? val.toString() : val; });
+        if(isArray(lineSeps)) lineSeps = lineSeps.map(function(val) { return val instanceof String ? val.toString() : val; });
+
         // validate options
 
         [fieldDels, fieldSeps, lineSeps].forEach(function(arr) {
@@ -73,22 +79,15 @@ function() {
                 throw new RangeError('Values cannot be shared between field delimiter, field separators and line separators');
         });
 
-        // convert object strings to primitive strings
-
-        fieldDels = fieldDels.map(function(val) { return val.toString(); });
-        fieldSeps = fieldSeps.map(function(val) { return val.toString(); });
-        lineSeps = lineSeps.map(function(val) { return val.toString(); });
-
         // set other options accordingly
 
         var stdLineSeps = ['\r', '\n', '\r\n']; // standard line separators (aka line breaks)
-        smartRegex = smartRegex &&
-                     fieldDels.every(function(val) { return val.length === 1; }) &&
-                     fieldSeps.every(function(val) { return val.length === 1; }) &&
-                     lineSeps.every(function(val) { return stdLineSeps.indexOf(val) !== -1; });
-
+        var regexOptimized = smartRegex &&
+                             fieldDels.every(function(val) { return val.length === 1; }) &&
+                             fieldSeps.every(function(val) { return val.length === 1; }) &&
+                             lineSeps.every(function(val) { return stdLineSeps.indexOf(val) !== -1; }); // optimize regex?
         var regexPatterns = [];
-        if(smartRegex) {
+        if(regexOptimized) {
             var regexFieldDels = fieldDels.map(function(val) { return escapeRegExp(val); }).join('');
             var regexFieldSeps = fieldSeps.map(function(val) { return escapeRegExp(val); }).join('');
             regexPatterns = [
@@ -113,6 +112,7 @@ function() {
         this._fieldSeps = fieldSeps;
         this._lineSeps = lineSeps;
         this._smartRegex = smartRegex;
+        this._regexOptimized = regexOptimized;
         this._regexPattern = regexPatterns.join('|');
         this._skipEmptyLinesWhen = skipEmptyLinesWhen;
         this._skipLinesWithWarnings = skipLinesWithWarnings;
@@ -130,6 +130,7 @@ function() {
             'fieldSeparators': this._fieldSeps.slice(0),
             'lineSeparators': this._lineSeps.slice(0),
             'smartRegex': this._smartRegex,
+            'regexOptimized': this._regexOptimized,
             'regexPattern': this._regexPattern,
             'skipEmptyLinesWhen': this._skipEmptyLinesWhen,
             'skipLinesWithWarnings': this._skipLinesWithWarnings,

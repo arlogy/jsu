@@ -49,7 +49,7 @@ const { isNode } = require('browser-or-node');
                         });
                     });
                 };
-                [undefined, null].forEach(function(storageObj) {
+                [undefined, null, {}].forEach(function(storageObj) {
                     sinon.stub(window, 'localStorage').value(storageObj);
                     checkImpl();
                 });
@@ -130,7 +130,7 @@ const { isNode } = require('browser-or-node');
                             assert.strictEqual(isEltVisible.calledOnceWithExactly(elt), true);
                             assert.strictEqual(setEltVisible.calledOnceWithExactly(elt, !isEltVisible.getCall(0).returnValue, dsp), true);
                             assert.strictEqual(setEltVisible.calledAfter(isEltVisible), true);
-                            sinon.restore(); // avoid leak threshold warning (instead of isEltVisible.restore() and others for example)
+                            sinon.restore(); // prevent memory leak and leakThreshold warning (contrary to isEltVisible.restore() and others for example)
                         });
                     });
                 });
@@ -235,7 +235,7 @@ const { isNode } = require('browser-or-node');
                         }
                         else assert.strictEqual(retVal, null);
                     });
-                    sinon.restore(); // prevent "global leak(s) detected" warning in real browsers
+                    sinon.restore(); // prevent "global leak(s) detected" warning in real web browsers
                 });
             });
         });

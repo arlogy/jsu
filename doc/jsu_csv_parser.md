@@ -39,7 +39,7 @@ values) based on configured options.
     unset. This option should always be enabled, except for testing or
     benchmarking for example: here's why if you're interested.
         - Let's say we want to match a string against a regular expression and
-        process the matches as we read double quotes or not. Possible
+        process the matches as we read double quotes (") or not. Possible
         implementations using arbitrary syntax are as follows.
             ```javascript
                 // approach 1: match '"' or any other character as many times as possible in myString
@@ -55,34 +55,35 @@ values) based on configured options.
         - Both approaches are functionally equivalent, but the second is better
         because it will run faster when the string to match is long enough and
         contains a large number of characters that are not double quotes.
-        This is because `.` only matches one character unlike `[^"]+`; so the
-        `while` loop will be entered less often in the second approach.
-        Therefore, it's best to let this parser choose the regular expression
-        *intelligently*.
+        This is because `.` in approach 1 matches only one character, unlike `[^"]+`
+        in approach 2; so the `while` loop will be entered less often in the
+        second approach. Therefore, it's best to let this parser choose the
+        regular expression *intelligently*.
     - `skipEmptyLinesWhen`: sets the type of empty lines that must be ignored
     during parsing, the line separators configured for this parser indicating
-    what is a line and what is not. Defaults to `-1` (invalid) and invalid
-    values are ignored. Valid values are one of the following integers.
+    what is or is not a line. Defaults to `-1` (invalid), and invalid values are
+    ignored. Valid values are one of the following integers.
         - `JsuCsvPsr.LineIsReallyEmpty`: skip a line only if it is the empty
         string (`''`).
         - `JsuCsvPsr.LineIsBlank`: skip a line if it is the empty string or
         contains only whitespace characters (`' '`, `'\t'`, `'\r'`, `'\n'`,
         ...).
         - `JsuCsvPsr.LineHasOnlyBlankFields`: skip a line if it contains only
-        blank fields, including when it is blank. This option is different from
-        `JsuCsvParser.LineIsBlank` because if we assume `','` is a field
-        separator for example, then the line `'   '` is blank and has only one
-        field (a blank one), while `', ,, '` is not blank but has only blank
-        fields. Similarly, if `'\t'` was a field separator, then the line
-        `'\t '` is both blank and has only blank fields (before and after the
-        field separator).
+        blank fields, including when it is blank. This option is both similar to
+        and different from `JsuCsvParser.LineIsBlank` because if we assume `','`
+        is a field separator for example, then the line `'   '` is blank and has
+        only blank fields (one field here), while `', ,, '` is not blank but has
+        only blank fields. Similarly, if `'\t'` is a field separator, then the
+        line `'\t '` is both blank and has only blank fields (before and after
+        the field separator).
     - `skipLinesWithWarnings`: indicates whether lines that contain inconsistent
     CSV strings must be ignored; defaults to `false`. See `getWarningsRef()`.
 
 ## this.getConfig()
 
-Returns a configuration object containing the options set for this parser upon
-construction. Changes made to the object will not affect the parser.
+Returns a configuration object containing the options set internally for this
+parser during construction, whose values may be different from those passed to
+the constructor. Changes made to the returned object will not affect the parser.
 
 ## this.readChunk(str)
 
@@ -93,12 +94,21 @@ function (i.e. until an appropriate line or field separator is read).
 
 ```javascript
 // Example
-parser.readChunk('1,'); // first field read followed by a field separator announcing a new field
-parser.readChunk('abc'); // second field read
-parser.readChunk('d'); // continue reading for the previous field
-parser.readChunk('ef'); // continue reading for the previous field
-parser.readChunk(',3'); // third field read after the field separator
-parser.readChunk('\n'); // all three fields are now part of a line
+(function() {
+    const parser = new JsuCsvPsr({fieldSeparators: [','], lineSeparators: ['\n']});
+    parser.readChunk('1,'); // first field read, followed by a field separator announcing a new field
+        console.log(parser.getRecordsRef());
+    parser.readChunk('abc'); // second field read
+        console.log(parser.getRecordsRef());
+    parser.readChunk('d'); // continue reading for the previous field
+        console.log(parser.getRecordsRef());
+    parser.readChunk('ef'); // continue reading for the previous field
+        console.log(parser.getRecordsRef());
+    parser.readChunk(',3'); // third field read after the field separator
+        console.log(parser.getRecordsRef());
+    parser.readChunk('\n'); // all three fields are now part of a single line
+        console.log(parser.getRecordsRef());
+})();
 ```
 
 Here is what to know about parsing, which is implemented from the requirements

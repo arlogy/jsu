@@ -48,9 +48,9 @@ const { isNode } = require('browser-or-node');
         describe('new JsuEvt.EventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
             const checkImpl = (checker) => {
                 [undefined, null, window.EventTarget].forEach(function(val) {
-                    sinon.stub(window, 'EventTarget').value(val);
+                    sinon.stub(isNode ? global : window, 'EventTarget').value(val);
                     checker();
-                    sinon.restore(); // prevent "global leak(s) detected" warning in real browsers
+                    sinon.restore(); // prevent "global leak(s) detected" warning in real web browsers
                 });
             };
             it('should never fail', () => {
@@ -67,6 +67,7 @@ const { isNode } = require('browser-or-node');
             });
             it('should correctly handle event listeners', () => {
                 checkImpl(function() {
+                    if(isNode) sinon.stub(global, 'Event').value(window.Event); // done each time because checkImpl() calls sinon.restore()
                     const eventPool = [
                         new Event('acc'), new Event('acc'), new Event('acc'),
                     ];
