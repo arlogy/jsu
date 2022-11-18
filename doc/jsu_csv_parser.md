@@ -82,8 +82,9 @@ values) based on configured options.
 ## this.getConfig()
 
 Returns a configuration object containing the options set internally for this
-parser during construction, whose values may be different from those passed to
-the constructor. Changes made to the returned object will not affect the parser.
+parser during construction. The values of these options may be different from
+those passed to the constructor, and changes to the returned object will not
+affect the behavior of the parser.
 
 ## this.readChunk(str)
 
@@ -189,8 +190,10 @@ Returns a copy of the value that would have been returned by `getWarningsRef()`.
 
 ## this.reset()
 
-Resets any property of this parser that might be updated during `readChunk()`.
-Useful for parsing unrelated CSV content with a single parser.
+Resets all parsing data (updated/collected during `readChunk()`). After
+calling this function, the parser properties will have the same values they had
+when the parser was created (i.e. before any data was parsed). Thus, this
+function can be used to parse unrelated CSV content using a single parser.
 
 ## Parsing smaller parts of a larger CSV string
 

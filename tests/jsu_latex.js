@@ -17,8 +17,10 @@ afterEach(() => {
 (function() {
     const JsuCmn = require('../src/jsu_common.js');
 
-    // helps verify that each distinct LaTeX shortcut data is considered during a test case
-    // will fail if new properties not in props are added
+    // this function is introduced to explicitly indicate (when necessary) which
+    // LaTeX shortcut data are already taken into account in a test case; only
+    // and all properties corresponding to known LaTex shortcut data must be
+    // present in props, otherwise the function will fail
     const checkShortcutData = (props) => {
         assert.deepStrictEqual(
             objectHasOnlyProperties(JsuLtx.getLatexShortcutData(), props),

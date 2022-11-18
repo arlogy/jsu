@@ -360,7 +360,7 @@ Implementation
     `[...]` whose elements are deep clones of those in `value`; note that `X` is
     cached before cloning the elements of `value` and will be reused when `value`
     is referenced from its elements.
-    - If `cloneCustomImpl` is truthy (expected function) and `const copy = cloneCustomImpl(value, cache);`
+    - If `cloneCustomImpl` is truthy (assumed to be a function then) and `const copy = cloneCustomImpl(value, cache);`
     is not `undefined`: returns `copy`; remember that the function will not be
     checked at all if a clone already exists in the cache for `value`; see the
     section on extending the default cloning algorithm for more information on

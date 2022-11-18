@@ -2,9 +2,9 @@
 
 ## 1.5.0 - Next version
 
-- Update `JsuCsvPsr.getConfig()`: the returned object has a new property `regexOptimized`
-to simplify `smartRegex` (which now only reflects this option as passed to the
-constructor).
+- Update `JsuCsvPsr.getConfig()`: the returned object has a new `regexOptimized`
+property simplifying the initialization of `smartRegex` (which now only reflects
+the option of the same name passed to the constructor).
 
 ## 1.4.0 - 2022/10/10
 

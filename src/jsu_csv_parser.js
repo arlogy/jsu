@@ -203,9 +203,9 @@ function() {
     };
 
     CsvParser.prototype.hasPendingData = function() {
-        // we check states q2 and q3 for cases where the only or last line read
-        // by readChunk() is '"' or '""'; so _currMatch and _currLineFields are
-        // empty
+        // we check states q2 and q3 for cases where the only line or the last
+        // line read by readChunk() is '"' or '""' (where '"' is the field
+        // delimiter); so _currMatch and _currLineFields are empty
         return this._currMatch !== '' || this._currLineFields.length !== 0 || this._currState === 'q2' || this._currState === 'q3';
     };
 
@@ -230,24 +230,23 @@ function() {
     CsvParser.prototype.getWarningsCopy = function() {
         var warnings = this.getWarningsRef();
         return warnings.map(function(obj) {
-            return {
-                'context': obj.context,
-                'type': obj.type,
-                'message': obj.message,
-                'linePos': obj.linePos,
-            };
+            var retVal = {};
+            for(var prop in obj) {
+                retVal[prop] = obj[prop];
+            }
+            return retVal;
         });
     };
 
     CsvParser.prototype.reset = function() {
-        // temporary data (about the line being parsed)
+        // data for the line being parsed
         this._currState = 'q0';
         this._currMatch = '';
         this._currLineStr = '';
         this._currLineFields = [];
         this._currLineWarnings = [];
 
-        // final data (about lines already parsed)
+        // data for lines already parsed
         this._records = [];
         this._warnings = [];
     };
