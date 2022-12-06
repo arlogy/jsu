@@ -176,13 +176,13 @@ test_browserify_tests_possibleSuccessBehavior() {
         echo_tcf "incorrect return status - failure expected here because a file is missing (created next)" && return 1
     fi
 
-    echo "$part1" > "$src_dir/_browser.template.part1.html" # create the missing file
+    echo "$part1" > "$src_dir/_browser_template_part1.html" # create the missing file
     browserify_tests "$src_dir" "$dst_dir" 1>/dev/null 2>&1
     if [[ "$?" -ne 1 ]]; then
         echo_tcf "incorrect return status - failure expected here because a file is missing (created next)" && return 1
     fi
 
-    echo "$part2" > "$src_dir/_browser.template.part2.html" # create the missing file
+    echo "$part2" > "$src_dir/_browser_template_part2.html" # create the missing file
     mkdir -p "$dst_dir/this_directory_will_be_lost"
     browserify_tests "$src_dir" "$dst_dir" 1>/dev/null 2>&1
     if [[ "$?" -ne 0 || -d "$dst_dir/this_directory_will_be_lost" || ! -d "$dst_dir" ]]; then
@@ -197,7 +197,7 @@ test_browserify_tests_possibleSuccessBehavior() {
             echo_tcf "destination directory has content other than index.html" && return 1
         fi
         # check the source directory which should not have changed (after all introduced content has been removed)
-        rm -rf "$src_dir/_browser.template.part1.html" "$src_dir/_browser.template.part2.html" "$src_dir/index.html"
+        rm -rf "$src_dir/_browser_template_part1.html" "$src_dir/_browser_template_part2.html" "$src_dir/index.html"
         if [[ ! -d "$src_dir" ||\
               #
               $(ls -I "initial_content.txt" "$src_dir") != "" ||\
@@ -219,7 +219,7 @@ test_browserify_tests_possibleSuccessBehavior() {
             echo_tcf "destination directory has content other than index.html and expected *.js files" && return 1
         fi
         # check the source directory which should not have changed (after all introduced content has been removed)
-        rm -rf "$src_dir/_browser.template.part1.html" "$src_dir/_browser.template.part2.html" "$src_dir/index.html"
+        rm -rf "$src_dir/_browser_template_part1.html" "$src_dir/_browser_template_part2.html" "$src_dir/index.html"
         if [[ ! -d "$src_dir/sub/sub" ||\
               #
               $(ls -I "a.js" -I "b.txt" -I "c.js" "$src_dir") != "sub" ||\

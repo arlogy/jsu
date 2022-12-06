@@ -118,7 +118,7 @@ browserify_tests() {
 
     echo "Remove and recreate $dst_dir" && rm -rf "$dst_dir" && mkdir -p "$dst_dir" || return 1
 
-    touch "$dst_html" && read_from_to_files "$src_dir/_browser.template.part1.html" "$dst_html" || return 1
+    touch "$dst_html" && read_from_to_files "$src_dir/_browser_template_part1.html" "$dst_html" || return 1
 
     # create a subshell just to enclose exports (using the export command)
     # all *.js files are considered for simplicity; subdirectories are excluded
@@ -128,7 +128,7 @@ browserify_tests() {
         find "$src_dir" -maxdepth 1 -name "*.js" | xargs -I{} bash -c "_browserify_tests_callback \"{}\" \"$dst_dir\" \"$dst_html\" || exit 255"
     ) || return 1
 
-    read_from_to_files "$src_dir/_browser.template.part2.html" "$dst_html" || return 1
+    read_from_to_files "$src_dir/_browser_template_part2.html" "$dst_html" || return 1
 
     echo "HTML test file available at $dst_html"
     return 0
