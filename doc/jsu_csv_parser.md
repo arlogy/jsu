@@ -77,7 +77,8 @@ values) based on configured options.
         line `'\t '` is both blank and has only blank fields (before and after
         the field separator).
     - `skipLinesWithWarnings`: indicates whether lines that contain inconsistent
-    CSV strings must be ignored; defaults to `false`. See `getWarningsRef()`.
+    CSV strings must be ignored, regardless of `skipEmptyLinesWhen`; defaults to
+    `false`. See `getWarningsRef()`.
 
 ## this.getConfig()
 
@@ -98,17 +99,17 @@ function (i.e. until an appropriate line or field separator is read).
 (function() {
     const parser = new JsuCsvPsr({fieldSeparators: [','], lineSeparators: ['\n']});
     parser.readChunk('1,'); // first field read, followed by a field separator announcing a new field
-        console.log(parser.getRecordsRef());
+        console.log(parser.getRecordsRef(), parser.hasPendingData());
     parser.readChunk('abc'); // second field read
-        console.log(parser.getRecordsRef());
+        console.log(parser.getRecordsRef(), parser.hasPendingData());
     parser.readChunk('d'); // continue reading for the previous field
-        console.log(parser.getRecordsRef());
+        console.log(parser.getRecordsRef(), parser.hasPendingData());
     parser.readChunk('ef'); // continue reading for the previous field
-        console.log(parser.getRecordsRef());
+        console.log(parser.getRecordsRef(), parser.hasPendingData());
     parser.readChunk(',3'); // third field read after the field separator
-        console.log(parser.getRecordsRef());
+        console.log(parser.getRecordsRef(), parser.hasPendingData());
     parser.readChunk('\n'); // all three fields are now part of a single line
-        console.log(parser.getRecordsRef());
+        console.log(parser.getRecordsRef(), parser.hasPendingData());
 })();
 ```
 
@@ -130,8 +131,8 @@ documentation.
 
 ## this.flush()
 
-Saves as a new record, pending data if any that were not saved after previous
-calls to `readChunk()`: see `hasPendingData()`.
+Saves as a new record, pending data if any according to `hasPendingData()`,
+that has not been saved after previous calls to `readChunk()`.
 
 Indeed, a CSV parser is unable to detect the end of a line or field unless it
 reads an appropriate line separator or field separator, or it reaches the end of
@@ -149,9 +150,9 @@ is allowed to not have an ending line separator.
 
 ## this.hasPendingData()
 
-Returns whether this parser contains data that were not saved after previous
-calls to `readChunk()`. This function is called during `flush()`; so you
-shouldn't need to call it for parsing purposes.
+Returns whether this parser contains data that has not yet been saved as part of
+a line, after previous calls to `readChunk()`. This function is called during
+`flush()`; so you shouldn't need to call it for parsing purposes.
 
 ## this.getRecordsRef()
 
@@ -193,7 +194,8 @@ Returns a copy of the value that would have been returned by `getWarningsRef()`.
 Resets all parsing data (updated/collected during `readChunk()`). After
 calling this function, the parser properties will have the same values they had
 when the parser was created (i.e. before any data was parsed). Thus, this
-function can be used to parse unrelated CSV content using a single parser.
+function can be used to allow the use of a single parser to parse unrelated CSV
+content.
 
 ## Parsing smaller parts of a larger CSV string
 
@@ -202,20 +204,21 @@ function can be used to parse unrelated CSV content using a single parser.
 (function() {
     // you can adapt this example to read from a file or other sources
     // let's say we want to parse a very long CSV string
-    // we can parse it incrementally by reading smaller substrings of arbitrary length
+    // we can parse it incrementally by reading smaller substrings of arbitrary length, as illustrated in csvData
     // '-' is the field separator and '\n' the line separator
     const csvData = [
         'line1:-field2-field3-field4-field5\nline2:-field2-field3-field4-field5',
         '\n',
         'line3:-', 'field2', '-field', '3-', 'fiel', 'd', '4', '-field5\n',
         'line4:-', 'field2-field3-field4-', 'field5', '\n',
-        '...\n', // fields can have a different length
+        '...\n', // fields can have different lengths
         'lineN:-', 'field2', '-', 'field3', '-field4-', 'field5', // no line separator at the end of the last line
     ];
 
     const parser = new JsuCsvPsr({'fieldSeparators': ['-']});
-    for(const data of csvData)
+    for(const data of csvData) {
         parser.readChunk(data);
+    }
     parser.flush(); // this is necessary because the last line in csvData does not end with a line separator
     console.log(parser.getRecordsRef()); // you can ignore the first line if it is a header line for example
 })();

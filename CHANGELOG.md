@@ -5,6 +5,9 @@
 - Update `JsuCsvPsr.getConfig()`: the returned object has a new `regexOptimized`
 property simplifying the initialization of `smartRegex` (which now only reflects
 the option of the same name passed to the constructor).
+- Make sure empty lines are ignored when `skipEmptyLinesWhen` is set to `JsuCsvPsr.LineIsReallyEmpty`.
+- Make sure line breaks are matched when `regexOptimized` is `false` (e.g. when
+`smartRegex` is `false`).
 
 ## 1.4.0 - 2022/10/10
 

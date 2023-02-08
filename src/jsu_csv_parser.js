@@ -91,7 +91,7 @@ function() {
             var regexFieldDels = fieldDels.map(function(val) { return escapeRegExp(val); }).join('');
             var regexFieldSeps = fieldSeps.map(function(val) { return escapeRegExp(val); }).join('');
             regexPatterns = [
-                '[^' + regexFieldDels + regexFieldSeps + '\n\r]+', // line breaks are characters from stdLineSeps
+                '[^' + regexFieldDels + regexFieldSeps + '\n\r]+', // the line breaks are characters from stdLineSeps
                 '[' + regexFieldDels + regexFieldSeps + ']',
                 stdLineSeps.slice(0).sort().reverse().join('|'), // see (1) below
             ];
@@ -103,7 +103,9 @@ function() {
             regexPatterns = fieldDels.concat(fieldSeps, lineSeps);
             regexPatterns = regexPatterns.map(function(val) { return escapeRegExp(val); });
             regexPatterns.sort().reverse(); // see (1) below
-            regexPatterns.push('.');
+            regexPatterns.push('.', '\n', '\r'); // it is necessary to explicitly account for line break characters
+                                                 //     - because the dot (.) metacharacter does not match them
+                                                 // note that ECMAScript 2018+ has an 's' (dotAll) regex flag to enable this
         }
 
         // set the properties of this parser
@@ -145,15 +147,17 @@ function() {
         var regex = new RegExp(this._regexPattern, 'g');
         var match = null;
         var matchStr = null;
+        var lineSepRead = null;
         while((match = regex.exec(str)) !== null) {
             matchStr = match[0];
-            this._currLineStr += matchStr;
+            lineSepRead = false;
+            this._currLineDataPending = true;
             switch(this._currState) {
                 case 'q0': // initial state
                     switch(true) {
                         case fieldDel === matchStr: this._currState = 'q2'; break;
                         case fieldSeps.indexOf(matchStr) !== -1: this._saveNewField(); break;
-                        case lineSeps.indexOf(matchStr) !== -1: this._saveNewLine(); break;
+                        case lineSeps.indexOf(matchStr) !== -1: this._saveNewLine(); lineSepRead = true; break;
                         default: this._currMatch += matchStr; this._currState = 'q1'; break;
                     }
                     break;
@@ -161,7 +165,7 @@ function() {
                 case 'q1': // continue reading a field not enclosed with delimiters
                     switch(true) {
                         case fieldSeps.indexOf(matchStr) !== -1: this._saveNewField(); this._currState = 'q0'; break;
-                        case lineSeps.indexOf(matchStr) !== -1: this._saveNewLine(); this._currState = 'q0'; break;
+                        case lineSeps.indexOf(matchStr) !== -1: this._saveNewLine(); this._currState = 'q0'; lineSepRead = true; break;
                         default: this._currMatch += matchStr; break;
                     }
                     break;
@@ -175,9 +179,9 @@ function() {
 
                 case 'q3': // determine whether a field delimiter closes or escapes a preceding field delimiter
                     switch(true) {
-                        case fieldDel === matchStr: this._currMatch += matchStr; this._currState = 'q2'; break;
+                        case fieldDel === matchStr: this._currMatch += fieldDel; this._currState = 'q2'; break;
                         case fieldSeps.indexOf(matchStr) !== -1: this._saveNewField(); this._currState = 'q0'; break;
-                        case lineSeps.indexOf(matchStr) !== -1: this._saveNewLine(); this._currState = 'q0'; break;
+                        case lineSeps.indexOf(matchStr) !== -1: this._saveNewLine(); this._currState = 'q0'; lineSepRead = true; break;
                         default:
                             this._saveNewWarning(CsvParser._getUnescapedDelimiterInfo(this._records.length + 1, fieldDel, matchStr));
                             this._currMatch += fieldDel + matchStr; this._curState = 'q2'; break;
@@ -186,6 +190,9 @@ function() {
 
                 default:
                     throw new Error('State ' + this._currState + ' is unknown: this should never happen');
+            }
+            if(!lineSepRead) {
+                this._currLineStr += matchStr;
             }
         }
     };
@@ -203,10 +210,7 @@ function() {
     };
 
     CsvParser.prototype.hasPendingData = function() {
-        // we check states q2 and q3 for cases where the only line or the last
-        // line read by readChunk() is '"' or '""' (where '"' is the field
-        // delimiter); so _currMatch and _currLineFields are empty
-        return this._currMatch !== '' || this._currLineFields.length !== 0 || this._currState === 'q2' || this._currState === 'q3';
+        return this._currLineDataPending;
     };
 
     CsvParser.prototype.getRecordsRef = function() {
@@ -221,9 +225,10 @@ function() {
     };
 
     CsvParser.prototype.getWarningsRef = function() {
-        // always include temporary warnings on the current line because data
-        // have already been parsed and the temporary warnings help understand
-        // why getRecordsRef() doesn't show the expected output for example
+        // always include temporary warnings on the current line: this is useful
+        // when data have been parsed but not reflected in the value returned by
+        // getRecordsRef(); so the temporary warnings would help understand why
+        // getRecordsRef() does not contain the expected output
         return this._warnings.concat(this._currLineWarnings);
     };
 
@@ -245,6 +250,7 @@ function() {
         this._currLineStr = '';
         this._currLineFields = [];
         this._currLineWarnings = [];
+        this._currLineDataPending = false;
 
         // data for lines already parsed
         this._records = [];
@@ -281,6 +287,7 @@ function() {
         this._currLineStr = '';
         this._currLineFields = [];
         this._currLineWarnings = [];
+        this._currLineDataPending = false;
     };
 
     // in other programming languages you may define these as constants
@@ -297,11 +304,11 @@ function() {
         };
     };
 
-    CsvParser._getUnescapedDelimiterInfo = function(linePos, delim, c) {
+    CsvParser._getUnescapedDelimiterInfo = function(linePos, delim, str) {
         return CsvParser._getInfo(
             'DelimitedField',
             'DelimiterNotEscaped',
-            'Expects field delimiter (' + delim + ') but got character ' + c[0],
+            'Expects field delimiter (' + delim + ') but got character ' + str[0],
             linePos
         );
     };
@@ -310,7 +317,7 @@ function() {
         return CsvParser._getInfo(
             'DelimitedField',
             'DelimiterNotTerminated',
-            'Expects field delimiter (' + delim + ') but reached end of line',
+            'Expects field delimiter (' + delim + ') but no more data to read',
             linePos
         );
     };

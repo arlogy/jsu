@@ -14,6 +14,10 @@ npm run test # run all API tests
     # entries of the `scripts` object in `package.json`, instead of a single
     # entry as follows for example:
     #     `"test": "echo Running tests... && mocha ./tests/_index.js ./tests/jsu*.js && echo Finished!"`
+    #
+    # when testing local changes to a file, it is best to test only that file by
+    # running the corresponding `test:...` script; this reduces test execution
+    # time
 ```
 
 ### Advanced checks (not optional, complement API tests)
