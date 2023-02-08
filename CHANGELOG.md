@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.0 - Next version
+## 1.5.0 - 2023/02/08
 
 - Update `JsuCsvPsr.getConfig()`: the returned object has a new `regexOptimized`
 property simplifying the initialization of `smartRegex` (which now only reflects
