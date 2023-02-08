@@ -425,7 +425,8 @@ see how they are cloned.
 ```
 
 Note that this function is not intended to preserve the behavior of the accessor
-properties of an object; see why below if you are interested.
+properties of an object; see why below if you are interested, otherwise skip the
+explanatory code...
 
 ```javascript
 // Reason 1: the accessor properties of an object which is an instance of a
@@ -502,13 +503,13 @@ Learn more about custom cloning with the example below.
     }
     Person.prototype.fullName = function() { return this.firstName + ' ' + this.lastName; };
     let obj = new Person('fname', 'lname');
-    obj = {a:obj, b:obj}; // has several references to obj for explanatory purposes
+    obj = {a:obj, b:{}, c:obj}; // has several references to obj for explanatory purposes
 
     console.log('--- ignore custom cloning');
     (function() {
         console.log(cloneDeep(obj)); // no custom cloning
         console.log(cloneDeep(obj, undefined, (value, cache) => {
-            return undefined; // skip custom cloning
+            return undefined; // skip custom cloning; so this function is called for obj and its properties
         }));
     })();
 
@@ -517,11 +518,12 @@ Learn more about custom cloning with the example below.
         let i = undefined;
         i = 0;
         console.log(cloneDeep(obj, undefined, (value, cache) => {
-            return ++i;
+            return ++i; // a clone is returned; so this function is called only once for obj itself
         }));
         i = 0;
         console.log(cloneDeep(obj, undefined, (value, cache) => {
-            if(value instanceof Person) return ++i;
+            if(value instanceof Person) // will be false the first time because obj is not a Person
+                return ++i;
             return undefined; // skip custom cloning
         }));
         i = 0;
@@ -533,8 +535,8 @@ Learn more about custom cloning with the example below.
             //       cache.get() must also be checked before using cache.add() to avoid duplicate keys in the cache
             //     - when a value is cached, the entry in the cache will be used, and this function will not be called
             if(value instanceof Person) {
-                console.log('custom cloning once due to caching...');
                 // return an already cached copy or a newly cached copy
+                // keep in mind that this function will not be called again for a value that has already been cached
                 const copy = cache.get(value);
                 return copy !== undefined ? copy : cache.add(value, ++i);
             }
@@ -542,7 +544,7 @@ Learn more about custom cloning with the example below.
         }));
     })();
 
-    console.log('--- implement custom cloning');
+    console.log('--- implement custom cloning'); // more explanations above
     (function() {
         console.log(cloneDeep(obj, undefined, (value, cache) => {
             if(value instanceof Person) {
@@ -551,14 +553,16 @@ Learn more about custom cloning with the example below.
             }
             return undefined; // skip custom cloning
         }));
+        console.log('of course, you can also `throw new Error(...)` from a custom deep cloning implementation');
+        console.log('    to control which values have a known deep cloning implementation and which do not');
     })();
 
     console.log('--- handle recursion during custom cloning');
     (function() {
-        const cloneCustomImpl = (value, cache) => { // implemented for explanatory purposes only
+        const cloneCustomImpl = (value, cache) => {
             const copy = {};
             cache.add(value, copy); // cache data before the recursive cloneDeep() calls below
-            for(const prop in value) { // possible way to iterate over properties...
+            for(const prop in value) { // a possible way to iterate over properties...
                 copy[prop] = cloneDeep(value[prop], cache, cloneCustomImpl);
             }
             return copy;
