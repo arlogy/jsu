@@ -42,15 +42,15 @@ values) based on configured options.
         process the matches as we read double quotes (") or not. Possible
         implementations using arbitrary syntax are as follows.
             ```javascript
-                // approach 1: match '"' or any other character as many times as possible in myString
-                while(myString matches /[".]/g) {
-                    switch(matchValue) { ... }
-                }
+            // approach 1: match '"' or any other character as many times as possible in myString
+            while(myString matches /[".]/g) {
+                switch(matchValue) { ... }
+            }
 
-                // approach 2: match '"' or any string not containing '"' as many times as possible in myString
-                while(myString matches /"|[^"]+/g) {
-                    switch(matchValue) { ... }
-                }
+            // approach 2: match '"' or any string not containing '"' as many times as possible in myString
+            while(myString matches /"|[^"]+/g) {
+                switch(matchValue) { ... }
+            }
             ```
         - Both approaches are functionally equivalent, but the second is better
         because it will run faster when the string to match is long enough and
