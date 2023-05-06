@@ -45,7 +45,7 @@ correct version of ECMAScript is targeted.
 ones to generate informative code coverage in the `coverage` directory.
 - `npm run code:check-state` (**key**): validate source code and run all kinds
 of tests, including code coverage generation; this is the command to use in
-GitLab CI/CD continuous integration for example.
+GitLab CI/CD automation for example.
 
 ### Cleaning generated data
 
