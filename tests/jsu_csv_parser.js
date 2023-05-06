@@ -847,7 +847,6 @@ if(quickCheck) {
                     }
                 },
                 'q3 -> not fieldDel, not fieldSep, not lineSep -> q2': function({parser, fieldDels, strArrBut, skipDataLine}) {
-                    const {regexOptimized} = parser.getConfig();
                     const arr = strArrBut(['fieldDels', 'fieldSeps', 'lineSeps']);
                     for(const moveToStateVal of fieldDels) {
                         for(const entryVal of arr) {
@@ -861,24 +860,12 @@ if(quickCheck) {
                             const skipCsvData = skipDataLine(false, moveToStateVal.trim() === '' && entryVal.trim() === '', entryVal.trim() === '', hasWarnings);
                             const warnings = [];
                             if(hasWarnings) {
-                                if(regexOptimized) {
-                                    warnings.push({
-                                        context: 'DelimitedField',
-                                        linePos: 1,
-                                        message: `Expects field delimiter (${moveToStateVal}) but got character ${entryVal[0]}`,
-                                        type: 'DelimiterNotEscaped',
-                                    });
-                                }
-                                else {
-                                    for(const ch of entryVal) {
-                                        warnings.push({
-                                            context: 'DelimitedField',
-                                            linePos: 1,
-                                            message: `Expects field delimiter (${moveToStateVal}) but got character ${ch}`,
-                                            type: 'DelimiterNotEscaped',
-                                        });
-                                    }
-                                }
+                                warnings.push({
+                                    context: 'DelimitedField',
+                                    linePos: 1,
+                                    message: `Expects field delimiter (${moveToStateVal}) but got character ${entryVal[0]}`,
+                                    type: 'DelimiterNotEscaped',
+                                });
                             }
                             checkData(parser, true, [], warnings);
                             if(skipCsvData) {
@@ -887,16 +874,13 @@ if(quickCheck) {
                             else {
                                 if(entryMatched) {
                                     const records = [];
-                                    if(regexOptimized) {
-                                        records.push([moveToStateVal + entryVal]);
-                                    }
-                                    else {
-                                        let str = '';
-                                        for(const ch of entryVal) {
-                                            str += moveToStateVal + ch;
-                                        }
-                                        records.push([str]);
-                                    }
+                                    records.push([moveToStateVal + entryVal]);
+                                    warnings.push({
+                                        context: 'DelimitedField',
+                                        linePos: 1,
+                                        message: `Expects field delimiter (${moveToStateVal}) but no more data to read`,
+                                        type: 'DelimiterNotTerminated',
+                                    });
                                     checkFlush(parser, records, warnings);
                                 }
                                 else {

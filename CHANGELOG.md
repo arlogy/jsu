@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.1 - Next version
+
+- Fix internal typo affecting the behavior of the parser. For example, given the
+CSV line `"a"b,c` where `"` is the field delimiter and `,` the field separator,
+parsing now yields one column `['a"b,c']` instead of two `['a"b', 'c']`. Indeed,
+the opening field delimiter should be considered unclosed because the second one
+cannot be a closing delimiter (due to `b` being the next character to read).
+
 ## 1.5.0 - 2023/02/08
 
 - Update `JsuCsvPsr.getConfig()`: the returned object has a new `regexOptimized`
