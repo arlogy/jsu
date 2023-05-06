@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.5.1 - Next version
+## 1.5.1 - 2023/05/06
 
 - Fix internal typo affecting the behavior of the parser. For example, given the
 CSV line `"a"b,c` where `"` is the field delimiter and `,` the field separator,
