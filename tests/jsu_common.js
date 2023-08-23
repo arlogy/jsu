@@ -243,7 +243,7 @@ const { isNode } = require('browser-or-node');
 
     (function() {
         describe('isCssColorOrString()', () => {
-            it("should return isCssColor() if not null, or isString() otherwise", () => {
+            it('should return isCssColor() if not null, or isString() otherwise', () => {
                 [null, false, true].forEach(function(isCssColorRetVal) {
                     funcParams.forEach(function(val) {
                         const isCssColor = sinon.stub(JsuCmn, 'isCssColor').returns(isCssColorRetVal);

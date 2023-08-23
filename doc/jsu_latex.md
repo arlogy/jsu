@@ -341,8 +341,8 @@ Converts a string for use in a LaTeX document, escaping special characters if
 any, and returns the converted string.
 - `str`: the string to convert; LaTeX shortcuts in the string (those that could
 be converted using `JsuLtx.convertLatexShortcuts()`) must be passed as is
-(i.e. not converted by any means) so that this function can transform them if
-necessary.
+(i.e. not converted by any means) so that this function can match and transform
+them accordingly.
 - `mode`: the LaTeX writing mode to consider; either `'text'` or `'math'`,
 otherwise `str` is returned as is (i.e. no conversion takes place). For your
 information, you can search *latex math mode* on the internet.
@@ -354,7 +354,7 @@ during conversion.
 // Example
 (function() {
     const latexSpecialCharsStr = '\\^ ~${}&#%_';
-    const sampleStr = '\\alpha\\alphax\\ _01_0_1_';
+    const sampleStr = '\\alpha\\alphax\\ _01_0_1_' + JsuLtx.convertLatexShortcuts('\\alpha');
     for(const mode of [null, 'text', 'math']) {
         console.log('\nmode:', mode);
         console.log(JsuLtx.toLatex(latexSpecialCharsStr, mode));
@@ -371,10 +371,11 @@ LaTeX shortcut as a single character.
 - `cursorPos`: an integer between `0` and `L` inclusive where `L` is either
 `JsuLtx.convertLatexShortcuts(strToUpdate).length` or equivalently
 `JsuLtx.isolateLatexShortcutValues(strToUpdate).length`; must not be a
-non-integer number (e.g. `1.5`) as the rule for converting/casting to integer is
-not guaranteed. This parameter can be seen as the position of a cursor in a text
-editor where each LaTeX shortcut must be treated as a single character when
-moving the cursor; it is the number of characters before said cursor.
+non-integer number (e.g. `1.5`) as conversion to integer only happens implicitly
+and should not be relied on. This parameter can be seen as the position of a
+cursor in a text editor where each LaTeX shortcut must be treated as a single
+character when moving the cursor; it is the number of characters before said
+cursor.
 - `strToInsert`: the string to insert.
 
 Returns `null` if `cursorPos` is out of range, an object with the following
@@ -385,10 +386,17 @@ properties otherwise.
 ```javascript
 // Example
 (function() {
+    console.log(JsuLtx.insertString('', 0, '\\'));
+    console.log(JsuLtx.insertString('alph', 0, '\\'));
+    console.log(JsuLtx.insertString('alpha', 0, '\\'));
+    console.log('\n');
     console.log(JsuLtx.insertString('\\alph', 5, '?'));
     console.log(JsuLtx.insertString('\\alph', 5, 'a'));
-    console.log(JsuLtx.insertString('alpha', 0, '\\'));
     console.log(JsuLtx.insertString('_0\\alha\\beta', 4, 'p'));
+    console.log('\n');
+    console.log(JsuLtx.insertString('', 1, '\\'));
+    console.log(JsuLtx.insertString('\\alpha', 2, 'x'));
+    console.log(JsuLtx.insertString('\\alpha', 1, 'x'));
 })();
 ```
 
@@ -400,10 +408,11 @@ each LaTeX shortcut as a single character.
 - `cursorPos`: an integer between `1` and `L` inclusive where `L` is either
 `JsuLtx.convertLatexShortcuts(strToUpdate).length` or equivalently
 `JsuLtx.isolateLatexShortcutValues(strToUpdate).length`; must not be a
-non-integer number (e.g. `1.5`) as the rule for converting/casting to integer is
-not guaranteed. This parameter can be seen as the position of a cursor in a text
-editor where each LaTeX shortcut must be treated as a single character when
-moving the cursor; it is the number of characters before said cursor.
+non-integer number (e.g. `1.5`) as conversion to integer only happens implicitly
+and should not be relied on. This parameter can be seen as the position of a
+cursor in a text editor where each LaTeX shortcut must be treated as a single
+character when moving the cursor; it is the number of characters before said
+cursor.
 
 Returns `null` if `cursorPos` is out of range, an object with the following
 properties otherwise.
@@ -413,9 +422,20 @@ properties otherwise.
 ```javascript
 // Example
 (function() {
+    console.log(JsuLtx.deleteOne('xyzt', 0));
+    console.log(JsuLtx.deleteOne('xyzt', 1));
+    console.log(JsuLtx.deleteOne('xyzt', 2));
+    console.log('\n');
+    console.log(JsuLtx.deleteOne('x\\alph_y', 2));
+    console.log(JsuLtx.deleteOne('x\\alphay', 2));
+    console.log(JsuLtx.deleteOne('x\\alpha', 2));
+    console.log('\n');
     console.log(JsuLtx.deleteOne('\\alph', 5));
-    console.log(JsuLtx.deleteOne('\\beta', 5));
     console.log(JsuLtx.deleteOne('\\beta', 1));
     console.log(JsuLtx.deleteOne('\\alupha\\beta', 4));
+    console.log('\n');
+    console.log(JsuLtx.deleteOne('\\beta', 5));
+    console.log(JsuLtx.deleteOne('\\beta', 2));
+    console.log(JsuLtx.deleteOne('\\beta', 1));
 })();
 ```

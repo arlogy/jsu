@@ -40,7 +40,8 @@ already a string, so it is better to pass a string to avoid conversion from
 - `value`: the value to save in storage; can be retrieved on success using `key`
 with `JsuCmn.getLocalStorageItem()`; converted to string if not already a
 string, so a number or a boolean is acceptable, but not an object or `null` for
-example because `{}` will become `'[object Object]'`.
+example because `{}` will become `'[object Object]'`. Existing storage item
+will be overwritten if any exists for `key`.
 
 ## JsuCmn.getLocalStorageItem(key)
 
@@ -544,7 +545,7 @@ Learn more about custom cloning with the example below.
         }));
     })();
 
-    console.log('--- implement custom cloning'); // more explanations above
+    console.log('--- implement custom cloning');
     (function() {
         console.log(cloneDeep(obj, undefined, (value, cache) => {
             if(value instanceof Person) {
@@ -554,7 +555,7 @@ Learn more about custom cloning with the example below.
             return undefined; // skip custom cloning
         }));
         console.log('of course, you can also `throw new Error(...)` from a custom deep cloning implementation');
-        console.log('    to control which values have a known deep cloning implementation and which do not');
+        console.log('    to control which values can be deep cloned and which cannot');
     })();
 
     console.log('--- handle recursion during custom cloning');

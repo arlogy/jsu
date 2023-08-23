@@ -64,7 +64,7 @@ function(nodejs) {
                     'shortcuts': greekPatterns.map(function(val) { return val.substring(1); }), // Greek letter shortcuts
                 },
             },
-            'subscript': { // all properties share the same meaning with greekLetter but target subscripts
+            'subscript': { // all properties share the same meaning with greekLetter but they target subscripts
                 'pattern': {
                     'value': '_[0-9]',
                     'list': ['_0', '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9'],

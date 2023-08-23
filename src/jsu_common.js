@@ -93,9 +93,8 @@ function() {
         return isColor !== null ? isColor : API.isString(value);
     };
 
-    // can be used internally when the value used to override the corresponding
-    // API.* property is not important; all we want is a check function and the
-    // initial implementation is sufficient
+    // for internal use, regardless of whether the corresponding API.* property
+    // is later changed, because its initial value is sufficient
     var _isArray = API.isArray;
 
     // --- Property Accessor/Modifier ---

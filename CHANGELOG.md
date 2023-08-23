@@ -13,9 +13,10 @@ cannot be a closing delimiter (due to `b` being the next character to read).
 - Update `JsuCsvPsr.getConfig()`: the returned object has a new `regexOptimized`
 property simplifying the initialization of `smartRegex` (which now only reflects
 the option of the same name passed to the constructor).
-- Make sure empty lines are ignored when `skipEmptyLinesWhen` is set to `JsuCsvPsr.LineIsReallyEmpty`.
-- Make sure line breaks are matched when `regexOptimized` is `false` (e.g. when
-`smartRegex` is `false`).
+- Make sure empty lines are ignored in case `skipEmptyLinesWhen` is set to `JsuCsvPsr.LineIsReallyEmpty`
+when creating a parser.
+- Make sure line breaks are matched in case `regexOptimized` is `false` (e.g.
+when `smartRegex` is `false`) when creating a parser.
 
 ## 1.4.0 - 2022/10/10
 
