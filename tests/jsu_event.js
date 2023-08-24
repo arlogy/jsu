@@ -47,11 +47,11 @@ const { isNode } = require('browser-or-node');
     (function() {
         describe('new JsuEvt.EventTarget(), whether JavaScript EventTarget() constructor is supported or not', () => {
             const checkImpl = (checker) => {
-                [undefined, null, window.EventTarget].forEach(function(val) {
+                for(const val of [undefined, null, window.EventTarget]) {
                     sinon.stub(isNode ? global : window, 'EventTarget').value(val);
                     checker();
                     sinon.restore(); // prevent "global leak(s) detected" warning in real web browsers
-                });
+                }
             };
             it('should never fail', () => {
                 checkImpl(function() {
@@ -122,7 +122,7 @@ const { isNode } = require('browser-or-node');
                     ...Object.getOwnPropertyNames(new JsuEvt.EventTarget()),
                     'getDelay', 'getTimeoutCount', 'getTimeoutLimit', 'isRunning', 'isSingleShot', 'start', 'stop',
                 ];
-                timeDels.forEach(function(limit) {
+                for(const limit of timeDels) {
                     const timerData = [
                         {timer:JsuEvt.createTimer(limit), limInConfig:false},
                         {timer:JsuEvt.createTimer({wrongProperty:limit}), limInConfig:false},
@@ -132,7 +132,7 @@ const { isNode } = require('browser-or-node');
                         const limitStr = limit+'';
                         timerData.push({timer:JsuEvt.createTimer({timeoutLimit:limitStr}), limInConfig:true, limVal:limitStr});
                     }
-                    timerData.forEach(function(tdata) {
+                    for(const tdata of timerData) {
                         const timer = tdata.timer;
                         const rlimit = tdata.limInConfig ? convertTimeoutLimit(tdata.limVal) : NTL; // real limit
                         assert.strictEqual(timer instanceof JsuEvt.EventTarget, true);
@@ -142,17 +142,17 @@ const { isNode } = require('browser-or-node');
                         assert.strictEqual(timer.getTimeoutCount(), 0);
                         assert.strictEqual(timer.getTimeoutLimit(), rlimit);
                         assert.strictEqual(timer.isSingleShot(), rlimit === 1);
-                    });
-                });
+                    }
+                }
             });
         });
 
         describe('createTimer() then starting and stopping the timer', () => {
             describe('start()', () => {
                 it('should correctly set timer properties', () => {
-                    timeDels.forEach(function(limit) {
+                    for(const limit of timeDels) {
                         const rlimit = convertTimeoutLimit(limit); // real limit
-                        timeDels.forEach(function(delay) {
+                        for(const delay of timeDels) {
                             const timer = JsuEvt.createTimer({timeoutLimit:limit});
                             timer.start(delay);
                             assert.strictEqual(timer.isRunning(), true);
@@ -161,20 +161,20 @@ const { isNode } = require('browser-or-node');
                             assert.strictEqual(timer.getTimeoutLimit(), rlimit);
                             assert.strictEqual(timer.isSingleShot(), rlimit === 1);
                             timer.stop();
-                        });
-                    });
+                        }
+                    }
                 });
 
                 // passed one argument (onFinished) to it(); see the 'asynchronous code' section in the Mocha documentation
                 it('should cause the timer to start, timeout and stop accordingly', function(onFinished) {
                     this.timeout(5000); // set timeout limit for the test case
                     // set a limit for numbers so that each timer doesn't take too long before it times out
-                    const entries = timeDels.filter(e => !isNumber(e) || e <= testLimit);
+                    const entries = timeDels.filter(x => !isNumber(x) || x <= testLimit);
                     entries.push(testLimit); // so the limit can be reached at least once
                     let stoppedTimersCount = 0;
-                    entries.forEach(function(limit) {
+                    for(const limit of entries) {
                         const rlimit = convertTimeoutLimit(limit); // real limit
-                        entries.forEach(function(delay) {
+                        for(const delay of entries) {
                             const rdelay = convertDelay(delay);
                             const timer = JsuEvt.createTimer({timeoutLimit:limit});
                             assert.strictEqual('testData' in timer, false);
@@ -211,16 +211,16 @@ const { isNode } = require('browser-or-node');
                             });
                             timer.start(delay);
                             timer.start(delay); // starting timer more than once should not change anything
-                        });
-                    });
+                        }
+                    }
                 });
             });
 
             describe('stop() without a preceding start()', () => {
                 it('should meet expectations on timer properties', () => {
-                    timeDels.forEach(function(limit) {
+                    for(const limit of timeDels) {
                         const rlimit = convertTimeoutLimit(limit)
-                        timeDels.forEach(function(delay) {
+                        for(const delay of timeDels) {
                             const timer = JsuEvt.createTimer({timeoutLimit:limit});
                             timer.stop();
                             assert.strictEqual(timer.isRunning(), false);
@@ -228,8 +228,8 @@ const { isNode } = require('browser-or-node');
                             assert.strictEqual(timer.getTimeoutCount(), 0);
                             assert.strictEqual(timer.getTimeoutLimit(), rlimit);
                             assert.strictEqual(timer.isSingleShot(), rlimit === 1);
-                        });
-                    });
+                        }
+                    }
                 });
             });
         });

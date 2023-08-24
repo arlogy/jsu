@@ -65,19 +65,19 @@ if(quickCheck) {
         const skipLinesWithWarnings = 'skipLinesWithWarnings' in options && options.skipLinesWithWarnings === true;
 
         // convert object strings to primitive strings
-        fieldDels = fieldDels.map(val => val instanceof String ? val.toString() : val);
-        if(Array.isArray(fieldSeps)) fieldSeps = fieldSeps.map(val => val instanceof String ? val.toString() : val);
-        if(Array.isArray(lineSeps)) lineSeps = lineSeps.map(val => val instanceof String ? val.toString() : val);
+        fieldDels = fieldDels.map(x => x instanceof String ? x.toString() : x);
+        if(Array.isArray(fieldSeps)) fieldSeps = fieldSeps.map(x => x instanceof String ? x.toString() : x);
+        if(Array.isArray(lineSeps)) lineSeps = lineSeps.map(x => x instanceof String ? x.toString() : x);
 
         // set other options accordingly
         const regexOptimized = smartRegex &&
-                               fieldDels.every(val => val.length === 1) &&
-                               fieldSeps.every(val => val.length === 1) &&
-                               lineSeps.every(val => stdLineSeps.indexOf(val) !== -1); // (1)
+                               fieldDels.every(x => x.length === 1) &&
+                               fieldSeps.every(x => x.length === 1) &&
+                               lineSeps.every(x => stdLineSeps.indexOf(x) !== -1); // (1)
         let regexPatterns = [];
         if(regexOptimized) { // (2.1)
-            const regexFieldDels = fieldDels.map(val => escapeRegExp(val)).join('');
-            const regexFieldSeps = fieldSeps.map(val => escapeRegExp(val)).join('');
+            const regexFieldDels = fieldDels.map(x => escapeRegExp(x)).join('');
+            const regexFieldSeps = fieldSeps.map(x => escapeRegExp(x)).join('');
             regexPatterns = [
                 '[^' + regexFieldDels + regexFieldSeps + '\n\r]+', // the line breaks are characters from stdLineSeps
                 '[' + regexFieldDels + regexFieldSeps + ']',
@@ -86,7 +86,7 @@ if(quickCheck) {
         }
         else { // (2.2)
             regexPatterns = fieldDels.concat(fieldSeps, lineSeps);
-            regexPatterns = regexPatterns.map(val => escapeRegExp(val));
+            regexPatterns = regexPatterns.map(x => escapeRegExp(x));
             regexPatterns.sort().reverse();
             regexPatterns.push('.', '\n', '\r');
         }
@@ -301,9 +301,9 @@ if(quickCheck) {
                 csvSpecialChars.every(x => x !== csvToken), true,
                 `'${csvToken}' must not be a field or line delimiter/separator as it is used for disambiguation`
             );
-            csvSpecialChars.forEach(x => {
+            for(const x of csvSpecialChars) {
                 str = str.replaceAll(x, csvToken);
-            });
+            }
             return str;
         };
         const getTestStrsExcluding = (ids, fieldDels, fieldSeps, lineSeps) => { // returns an array of strings excluding those matching the given ids
@@ -696,9 +696,9 @@ if(quickCheck) {
                             // read input
                             parser.readChunk(moveToStateVal); // first move from q0 to q1
                             if(Array.isArray(entryVal)) {
-                                entryVal.forEach(x => {
+                                for(const x of entryVal) {
                                     parser.readChunk(x);
-                                });
+                                }
                                 entryVal = entryVal.join('');
                             }
                             else {
@@ -747,9 +747,9 @@ if(quickCheck) {
                             // read input
                             parser.readChunk(moveToStateVal); // first move from q0 to q2
                             if(Array.isArray(entryVal)) {
-                                entryVal.forEach(x => {
+                                for(const x of entryVal) {
                                     parser.readChunk(x);
-                                });
+                                }
                                 entryVal = entryVal.join('');
                             }
                             else {
