@@ -165,7 +165,7 @@ const { isNode } = require('browser-or-node');
                     }
                 });
 
-                // passed one argument (onFinished) to it(); see the 'asynchronous code' section in the Mocha documentation
+                // passed one argument (onFinished) to it(); see 'asynchronous code' section in mocha's documentation
                 it('should cause the timer to start, timeout and stop accordingly', function(onFinished) {
                     this.timeout(5000); // set timeout limit for the test case
                     // set a limit for numbers so that each timer doesn't take too long before it times out
