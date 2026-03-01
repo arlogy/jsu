@@ -45,7 +45,7 @@ will be overwritten if any exists for `key`.
 
 ## JsuCmn.getLocalStorageItem(key)
 
-Returns the value (string) of a storage item if any or `null`.
+Returns the value (string) of a storage item if any, or `null` otherwise.
 - `key`: the key of the item in storage; see `JsuCmn.setLocalStorageItem()`.
 
 ## JsuCmn.setEltVisible(elt, vis, dsp)
@@ -53,15 +53,15 @@ Returns the value (string) of a storage item if any or `null`.
 *Use this function only in rare cases where third-party libraries such as jQuery
 are not an option.*
 
-Sets the visibility of an HTML element.
+Sets the visibility of an HTML element, updating its display style accordingly.
 - `elt`: the HTML element whose visibility is to be set; could be the result of
 `document.getElementById()` for example.
 - `vis`: indicates whether `elt` must be visible or not.
     - If `vis` is falsy, `'none'` is used as display style for `elt`.
     - Otherwise the value of `dsp` is used as display style unless `dsp` is
     falsy or `'none'`, in which case `'revert'` is used instead.
-    - You don't have to worry about these specifications unless a specific `dsp`
-    should be passed for some HTML element when setting its visibility in a
+    - You don't have to worry about these specifications unless you have to pass
+    a specific `dsp` for some HTML element when setting its visibility in a
     given context.
 - `dsp`: optional display style; possible values are those of the display CSS
 property (e.g. `'inline'`, `'block'`, etc.), depending on browsers and the HTML

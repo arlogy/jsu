@@ -40,7 +40,7 @@ const { isNode } = require('browser-or-node');
 
     (function() {
         describe('getLocalStorageItem() & setLocalStorageItem()', () => {
-            it('should fail if window.localSotrage is not available', () => {
+            it('should fail if window.localStorage is not available', () => {
                 const checkImpl = () => {
                     for(const key of funcParams) {
                         for(const val of funcParams) {
@@ -54,21 +54,34 @@ const { isNode } = require('browser-or-node');
                     checkImpl();
                 }
             });
-            it('should succeed otherwise unless the key or the value cannot be converted to a string', () => {
+            it('should fail if window.localStorage is available but the key or value to be stored cannot be implicitly converted to a string', () => {
+                for(const key of funcParams) {
+                    for(const val of funcParams) {
+                        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#symbol_type_conversions
+                        const implicitlyConvertibleToString = typeof key !== 'symbol' && typeof val !== 'symbol';
+                        if(!implicitlyConvertibleToString) {
+                            assert.strictEqual(JsuCmn.setLocalStorageItem(key, val), false);
+                            if(isNode) {
+                                assert.strictEqual(JsuCmn.getLocalStorageItem(key), null); // fails in web browser
+                            }
+                        }
+                    }
+                }
+            });
+            it('should succeed if window.localStorage is available but the key and value to be stored can be implicitly converted to a string', () => {
                 if(isNode) {
                     const dom = new JSDOM('<!DOCTYPE html><html></html>', {
-                        url: 'https://fake_url/', // so that accessing window.localStorage doesn't throw an exception
+                        url: 'https://fake_url/', // so that accessing window.localStorage in the tested JsuCmn.* functions doesn't throw an exception
                     });
                     sinon.stub(global, 'window').value(dom.window);
                 }
                 for(const key of funcParams) {
                     for(const val of funcParams) {
-                        if(JsuCmn.setLocalStorageItem(key, val)) {
+                        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#symbol_type_conversions
+                        const implicitlyConvertibleToString = typeof key !== 'symbol' && typeof val !== 'symbol';
+                        if(implicitlyConvertibleToString) {
+                            assert.strictEqual(JsuCmn.setLocalStorageItem(key, val), true);
                             assert.strictEqual(JsuCmn.getLocalStorageItem(key), val+'');
-                        }
-                        else { // fails because a symbol cannot be implicitly converted to a string
-                               //     see Symbol type conversions in the documentation
-                            assert.strictEqual(typeof key === 'symbol' || typeof val === 'symbol', true);
                         }
                     }
                 }

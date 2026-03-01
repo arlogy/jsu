@@ -11,7 +11,8 @@ Download the Jsu scripts you need and embed them as follows.
 <script src="path_to/jsu_latex.js"></script>
 <script>
     // you can use the global Jsu object here; it is defined because at least
-    // one script has been loaded; new scripts add new properties to the object
+    // one of the above scripts has been loaded; new scripts add new properties
+    // to the object
 
     // these short names are used throughout the documentation
     const JsuCmn = Jsu.Common; // utility object: JsuCmn.funcName();

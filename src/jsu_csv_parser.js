@@ -225,10 +225,11 @@ function() {
     };
 
     CsvParser.prototype.getWarningsRef = function() {
-        // always include temporary warnings on the current line: this is useful
-        // when data have been parsed but not reflected in the value returned by
-        // getRecordsRef(); so the temporary warnings would help understand why
-        // getRecordsRef() does not contain the expected output
+        // always include the temporary warnings on the current line (those
+        // stored in this._currLineWarnings): this is useful when data have been
+        // parsed but not reflected in the value returned by getRecordsRef(); so
+        // the temporary warnings would help understand why getRecordsRef() does
+        // not contain the expected output
         return this._warnings.concat(this._currLineWarnings);
     };
 
@@ -308,7 +309,7 @@ function() {
         return CsvParser._getInfo(
             'DelimitedField',
             'DelimiterNotEscaped',
-            'Expects field delimiter (' + delim + ') but got character ' + str[0],
+            'Expects field delimiter (' + delim + '), but got character ' + str[0],
             linePos
         );
     };
@@ -317,7 +318,7 @@ function() {
         return CsvParser._getInfo(
             'DelimitedField',
             'DelimiterNotTerminated',
-            'Expects field delimiter (' + delim + ') but no more data to read',
+            'Expects field delimiter (' + delim + '), but no more data to read',
             linePos
         );
     };

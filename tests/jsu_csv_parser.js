@@ -490,7 +490,7 @@ if(quickCheck) {
                             checkFlush(parser, [['']], [{
                                 context: 'DelimitedField',
                                 linePos: 1,
-                                message: `Expects field delimiter (${fieldDel}) but no more data to read`,
+                                message: `Expects field delimiter (${fieldDel}), but no more data to read`,
                                 type: 'DelimiterNotTerminated',
                             }]);
                         }
@@ -765,7 +765,7 @@ if(quickCheck) {
                                 checkFlush(parser, [[entryVal]], [{
                                     context: 'DelimitedField',
                                     linePos: 1,
-                                    message: `Expects field delimiter (${moveToStateVal}) but no more data to read`,
+                                    message: `Expects field delimiter (${moveToStateVal}), but no more data to read`,
                                     type: 'DelimiterNotTerminated',
                                 }]);
                             }
@@ -791,7 +791,7 @@ if(quickCheck) {
                             checkFlush(parser, [[moveToStateVal]], [{
                                 context: 'DelimitedField',
                                 linePos: 1,
-                                message: `Expects field delimiter (${moveToStateVal}) but no more data to read`,
+                                message: `Expects field delimiter (${moveToStateVal}), but no more data to read`,
                                 type: 'DelimiterNotTerminated',
                             }]);
                         }
@@ -863,7 +863,7 @@ if(quickCheck) {
                                 warnings.push({
                                     context: 'DelimitedField',
                                     linePos: 1,
-                                    message: `Expects field delimiter (${moveToStateVal}) but got character ${entryVal[0]}`,
+                                    message: `Expects field delimiter (${moveToStateVal}), but got character ${entryVal[0]}`,
                                     type: 'DelimiterNotEscaped',
                                 });
                             }
@@ -878,7 +878,7 @@ if(quickCheck) {
                                     warnings.push({
                                         context: 'DelimitedField',
                                         linePos: 1,
-                                        message: `Expects field delimiter (${moveToStateVal}) but no more data to read`,
+                                        message: `Expects field delimiter (${moveToStateVal}), but no more data to read`,
                                         type: 'DelimiterNotTerminated',
                                     });
                                     checkFlush(parser, records, warnings);

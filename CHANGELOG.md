@@ -2,11 +2,14 @@
 
 ## 1.5.1 - 2023/05/06
 
-- Fix internal typo affecting the behavior of the parser. For example, given the
-CSV line `"a"b,c` where `"` is the field delimiter and `,` the field separator,
-parsing now yields one column `['a"b,c']` instead of two `['a"b', 'c']`. Indeed,
-the opening field delimiter should be considered unclosed because the second one
-cannot be a closing delimiter (due to `b` being the next character to read).
+- Fix an internal typo affecting the behavior of the CSV parser. For example,
+given the CSV line `"a"b,c`, where `"` is the field delimiter and `,` the field
+separator, parsing now yields a single column `['a"b,c']` and two warnings
+(*delimiter not escaped* and *delimiter not terminated*), instead of two columns
+`['a"b', 'c']` and a single warning (*delimiter not escaped*). Indeed, the
+opening field delimiter should be treated as unclosed since the second `"`
+cannot be considered a closing delimiter (because it is immediately followed by
+`b`).
 
 ## 1.5.0 - 2023/02/08
 

@@ -1,7 +1,7 @@
 # jsu_csv_parser
 
 *The following implementation of a CSV parser conforms to RFC 4180 and is based
-on [this](https://github.com/arlogy/devnotes/blob/master/data/csv_parsing_for_the_developer.md)
+on [this](https://github.com/arlogy/algos/blob/main/csv_parser/design_and_implementation_of_a_streaming_csv_parser.md)
 instructional document. It is designed in such a way that it can be easily
 translated into other programming languages.*
 
@@ -131,8 +131,7 @@ documentation.
 
 ## this.flush()
 
-Saves as a new record, pending data if any according to `hasPendingData()`,
-that has not been saved after previous calls to `readChunk()`.
+Saves as a new record, pending data if any (according to `hasPendingData()`).
 
 Indeed, a CSV parser is unable to detect the end of a line or field unless it
 reads an appropriate line separator or field separator, or it reaches the end of
@@ -156,7 +155,7 @@ a line, after previous calls to `readChunk()`. This function is called during
 
 ## this.getRecordsRef()
 
-Returns the records found by this parser if any during readChunk(). It is an
+Returns the records found by this parser if any during `readChunk()`. It is an
 array of arrays with each sub-array corresponding to the fields on a line.
 
 Note that internal objects are returned for better performance and should not be
@@ -220,6 +219,7 @@ content.
         parser.readChunk(data);
     }
     parser.flush(); // this is necessary because the last line in csvData does not end with a line separator
-    console.log(parser.getRecordsRef()); // you can ignore the first line if it is a header line for example
+    console.log('\nRecords:', parser.getRecordsRef()); // you can ignore the first line of the records if it is a header
+    console.log('\nWarnings:', parser.getWarningsRef());
 })();
 ```
